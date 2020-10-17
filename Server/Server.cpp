@@ -10,6 +10,7 @@ using namespace std;
 
 //Declaraciones
 string procesarMensaje(string &mensaje, SOCKET &clientSocket);
+int enviarMensaje(string& mensaje, SOCKET& sock);
 
 int main()
 {
@@ -93,6 +94,8 @@ int main()
 		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
+		// Enviar pedido de usuario y contraseña
+
 		// Recibir hasta que el cliente corte la conexion
 		string respuesta = "";
 		bool timeoutCliente = false;
@@ -170,4 +173,26 @@ string procesarMensaje(string &mensaje, SOCKET &clientSocket) {
 	}
 
 	return respuesta;
+}
+
+int enviarMensaje(string& mensaje, SOCKET& sock) {
+	int iResult = 0;
+
+	// Intentar enviar mensaje
+	iResult = send(sock, mensaje.c_str(), (int)strlen(mensaje.c_str()) + 1, 0);
+	if (iResult == SOCKET_ERROR) {
+		cout << "Fallo en el envio del mensaje" << endl;
+		return 1;
+	}
+
+	cout << "Mensaje enviado: " << mensaje << endl;
+
+	// Apagar el socket ya que no se enviará mas data
+	iResult = shutdown(sock, SD_SEND);
+	if (iResult == SOCKET_ERROR) {
+		cout << "Fallo al apagar el socket" << endl;
+		return 1;
+	}
+
+	return iResult;
 }
