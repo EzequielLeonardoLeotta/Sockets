@@ -1,3 +1,5 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
@@ -6,97 +8,163 @@
 
 using namespace std;
 
-void main()
+//Declaraciones
+string procesarMensaje(string &mensaje, SOCKET &clientSocket);
+
+int main()
 {
-	// Initialze winsock
-	WSADATA wsData;
-	WORD ver = MAKEWORD(2, 2);
+	while (true) {
+		// Iniciar Winsock
+		WSADATA wsData;
+		WORD ver = MAKEWORD(2, 2);
+		char buf[4096];
 
-	int wsOk = WSAStartup(ver, &wsData);
-	if (wsOk != 0)
-	{
-		cerr << "Can't Initialize winsock! Quitting" << endl;
-		return;
-	}
-
-	// Create a socket
-	SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
-	if (listening == INVALID_SOCKET)
-	{
-		cerr << "Can't create a socket! Quitting" << endl;
-		return;
-	}
-
-	// Bind the ip address and port to a socket
-	sockaddr_in hint;
-	hint.sin_family = AF_INET;
-	hint.sin_port = htons(54000);
-	hint.sin_addr.S_un.S_addr = INADDR_ANY; // Could also use inet_pton .... 
-
-	bind(listening, (sockaddr*)&hint, sizeof(hint));
-
-	// Tell Winsock the socket is for listening 
-	listen(listening, SOMAXCONN);
-
-	// Wait for a connection
-	sockaddr_in client;
-	int clientSize = sizeof(client);
-
-	SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
-
-	char host[NI_MAXHOST];		// Client's remote name
-	char service[NI_MAXSERV];	// Service (i.e. port) the client is connect on
-
-	ZeroMemory(host, NI_MAXHOST); // same as memset(host, 0, NI_MAXHOST);
-	ZeroMemory(service, NI_MAXSERV);
-
-	if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-	{
-		cout << host << " connected on port " << service << endl;
-	}
-	else
-	{
-		inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
-		cout << host << " connected on port " <<
-			ntohs(client.sin_port) << endl;
-	}
-
-	// Close listening socket
-	closesocket(listening);
-
-	// While loop: accept and echo message back to client
-	char buf[4096];
-
-	while (true)
-	{
-		ZeroMemory(buf, 4096);
-
-		// Wait for client to send data
-		int bytesReceived = recv(clientSocket, buf, 4096, 0);
-		if (bytesReceived == SOCKET_ERROR)
+		int iResult = WSAStartup(ver, &wsData);
+		if (iResult != 0)
 		{
-			cerr << "Error in recv(). Quitting" << endl;
-			break;
+			cerr << "No se pudo iniciar Winsock" << endl;
+			return 1;
 		}
 
-		if (bytesReceived == 0)
+		// Crear socket de escucha
+		string ip = "127.0.0.1";
+		int puerto = 54000;
+
+		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
+		if (listening == INVALID_SOCKET)
 		{
-			cout << "Client disconnected " << endl;
-			break;
+			cerr << "No se pudo crear el socket de escucha" << endl;
+			WSACleanup();
+			return 1;
 		}
 
-		cout << string(buf, 0, bytesReceived) << endl;
+		// Vincular la direccion ip y el puerto al socket de escucha
+		sockaddr_in hint;
+		hint.sin_family = AF_INET;
+		hint.sin_port = htons(puerto);
+		hint.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
+		bind(listening, (sockaddr*)&hint, sizeof(hint));
 
-		// Echo message back to client
-		send(clientSocket, buf, bytesReceived + 1, 0);
 
+		// Setear el socket para recibir conexiones
+		iResult = listen(listening, SOMAXCONN);
+		if (iResult == SOCKET_ERROR) {
+			cout << "Error al setear el socket como listen" << endl;
+			closesocket(listening);
+			WSACleanup();
+			return 1;
+		}
+		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
+
+		// Esperar una conexion
+		sockaddr_in client;
+		int clientSize = sizeof(client);
+
+		SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+		if (clientSocket == INVALID_SOCKET)
+		{
+			cerr << "No se pudo crear el socket del cliente" << endl;
+			WSACleanup();
+			return 1;
+		}
+
+		char host[NI_MAXHOST];		// Nombre del equipo remoto
+		char service[NI_MAXSERV];	// Puerto del equipo remoto
+
+		ZeroMemory(host, NI_MAXHOST);
+		ZeroMemory(service, NI_MAXSERV);
+
+		if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0) {
+			cout << host << " conectado en puerto " << service << endl;
+		}
+		else {
+			inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
+			cout << host << " conectado en puerto " <<
+				ntohs(client.sin_port) << endl;
+		}
+
+		// Cerrar socket de escucha porque se conectó un cliente
+		closesocket(listening);
+
+		// Configurar el socket para desconexion despues de 2 minutos de inactividad
+		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
+		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+
+		// Recibir hasta que el cliente corte la conexion
+		string respuesta = "";
+		bool timeoutCliente = false;
+		do {
+			iResult = recv(clientSocket, buf, 4096, 0);
+			if (iResult == SOCKET_ERROR) {
+				if (WSAGetLastError() == 10060) {
+					cerr << "Cliente desconectado (TIMEOUT)" << endl;
+					timeoutCliente = true;
+					break;
+				}
+			}
+			if (iResult > 0) {
+				cout << "Bytes recibidos: " << iResult << endl;
+				string mensaje = "";
+				mensaje.assign(buf);
+				cout << "Mensaje recibido: " << mensaje << endl;
+
+				// Procesar la peticion y responder
+				respuesta = procesarMensaje(mensaje, clientSocket);
+			}
+			else if (iResult == 0)
+				cout << "Cliente desconectado" << endl;
+			else {
+				cout << "Error in recv()" << endl;
+				closesocket(clientSocket);
+				WSACleanup();
+				return 1;
+			}
+		} while (iResult > 0);
+
+		// Enviar respuesta al cliente
+		if (respuesta != "" && !timeoutCliente) {
+			int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
+			if (iResult == SOCKET_ERROR) {
+				cout << "Error al enviar la respuesta" << endl;
+				closesocket(clientSocket);
+				WSACleanup();
+				return 1;
+			}
+			cout << "Bytes enviados: " << iResult << endl;
+			cout << "Respuesta enviada: " << respuesta << endl;
+		}
+
+		// Apagar la conexion
+		iResult = shutdown(clientSocket, SD_SEND);
+		if (iResult == SOCKET_ERROR) {
+			cout << "Error al apagar conexion" << endl;
+			closesocket(clientSocket);
+			WSACleanup();
+			return 1;
+		}
+
+		// Cerrar el socket
+		closesocket(clientSocket);
+
+		// Limpiar Winsock
+		WSACleanup();
 	}
 
-	// Close the socket
-	closesocket(clientSocket);
+	return 0;
+}
 
-	// Cleanup winsock
-	WSACleanup();
+// Implementaciones
 
-	system("pause");
+string procesarMensaje(string &mensaje, SOCKET &clientSocket) {
+	string delimitador = ";";
+	string comando = mensaje.substr(0, mensaje.find(delimitador));
+	string respuesta = "";
+
+	cout << "Comando recibido: " << comando << endl;
+
+	if (comando == "login") {
+		respuesta = "loginOk";
+	}
+
+	return respuesta;
 }
