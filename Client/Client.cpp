@@ -65,7 +65,7 @@ int main()
 		}
 		else {
 			// Si se conectó bien hacer ...
-			cout << "Conectado al servidor" << endl;
+			cout << endl << "Conectado al servidor" << endl << endl;
 			system("pause");
 
 			// Solicitar datos de login al usuario
@@ -78,7 +78,6 @@ int main()
 			cin >> password;
 
 			string mensaje = "login;" + usuario + ";" + password;
-			system("pause");
 
 			// Enviar pedido de login
 			if (enviarMensaje(mensaje, sock) == 1) {
@@ -187,10 +186,10 @@ string recibirMensaje(SOCKET& sock) {
 	// Recibir hasta que el servidor corte la conexion
 	do {
 		iResultado = recv(sock, bufer, 4096, 0);
-		if (iResultado > 0)
-			cout << "Bytes recibidos: " << iResultado << endl;
-		else if (iResultado == 0)
-			cout << "Conexion cerrada" << endl;
+		if (iResultado > 0);
+		/*cout << "Bytes recibidos: " << iResultado << endl;*/
+		else if (iResultado == 0);
+			/*cout << "Conexion cerrada" << endl;*/
 		else
 			cout << "Error en recv()" << endl;
 	} while (iResultado > 0);

@@ -106,7 +106,7 @@ int main()
 				}
 			}
 			if (iResult > 0) {
-				cout << "Bytes recibidos: " << iResult << endl;
+				/*cout << "Bytes recibidos: " << iResult << endl;*/
 				string mensaje = "";
 				mensaje.assign(buf);
 				cout << "Mensaje recibido: " << mensaje << endl;
@@ -114,8 +114,8 @@ int main()
 				// Procesar la peticion y responder
 				respuesta = procesarMensaje(mensaje, clientSocket);
 			}
-			else if (iResult == 0)
-				cout << "Cliente desconectado" << endl;
+			else if (iResult == 0);
+				/*cout << "Cliente desconectado" << endl;*/
 			else {
 				cout << "Error in recv()" << endl;
 				closesocket(clientSocket);
@@ -133,7 +133,7 @@ int main()
 				WSACleanup();
 				return 1;
 			}
-			cout << "Bytes enviados: " << iResult << endl;
+			/*cout << "Bytes enviados: " << iResult << endl;*/
 			cout << "Respuesta enviada: " << respuesta << endl << endl;
 		}
 
