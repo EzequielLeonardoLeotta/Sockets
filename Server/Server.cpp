@@ -13,6 +13,9 @@ string procesarMensaje(string &mensaje, SOCKET &clientSocket);
 
 int main()
 {
+	//Caracteres en español
+	setlocale(LC_ALL, "Spanish");
+
 	while (true) {
 		// Iniciar Winsock
 		WSADATA wsData;
@@ -131,7 +134,7 @@ int main()
 				return 1;
 			}
 			cout << "Bytes enviados: " << iResult << endl;
-			cout << "Respuesta enviada: " << respuesta << endl;
+			cout << "Respuesta enviada: " << respuesta << endl << endl;
 		}
 
 		// Apagar la conexion

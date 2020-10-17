@@ -17,10 +17,13 @@ string recibirMensaje(SOCKET& sock);
 
 int main()
 {	
-	// Pedir IP y puerto. Intentar conexion a esos datos
+	//Caracteres en español
+	setlocale(LC_ALL, "Spanish");
+
 	int puerto=0;
 	string ip="";
 
+	// Pedir IP y puerto. Intentar conexion a esos datos
 	while (true) {
 		system("cls");
 		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl ;
@@ -62,22 +65,36 @@ int main()
 		}
 		else {
 			// Si se conectó bien hacer ...
+			cout << "Conectado al servidor" << endl;
 			system("pause");
 
-			//// Solicitar datos de login al usuario
-			//string mensaje = "login;javi;123";
-			//// Enviar pedido de login
-			//if (enviarMensaje(mensaje, sock) == 1) {
-			//	closesocket(sock);
-			//	WSACleanup();
-			//	return 1;
-			//}
+			// Solicitar datos de login al usuario
+			system("cls");
+			string usuario = "";
+			string password = "";
+			cout << "Usuario: ";
+			cin >> usuario;
+			cout << "Contraseña: ";
+			cin >> password;
 
-			//// Recibir respuesta del servidor
-			//string respuesta = recibirMensaje(sock);
-			//if (respuesta != "") {
-			//	cout << "Respuesta del servidor: " << respuesta << endl;
-			//}
+			string mensaje = "login;" + usuario + ";" + password;
+			system("pause");
+
+			// Enviar pedido de login
+			if (enviarMensaje(mensaje, sock) == 1) {
+				cout << "Error al enviar el mensaje" << endl;
+				/*closesocket(sock);
+				WSACleanup();
+				return 1;*/
+			}
+			else {
+				// Recibir respuesta del servidor
+				string respuesta = recibirMensaje(sock);
+				if (respuesta != "") {
+					cout << "Respuesta del servidor: " << respuesta << endl << endl;
+					system("pause");
+				}
+			}
 		}
 
 		// Cerrar el socket y limpiar Winsock
