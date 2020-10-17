@@ -17,39 +17,37 @@ string recibirMensaje(SOCKET& sock);
 
 int main()
 {	
-	// Iniciar Winsock
-	WSAData data;
-	WORD ver = MAKEWORD(2, 2);
-	int wsResult = WSAStartup(ver, &data);
-	if (wsResult != 0)
-	{
-		cerr << "No se arrancar Winsock" << endl;
-		return 1;
-	}
-
-	// Crear socket
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET)
-	{
-		cerr << "No se pudo crear el socket" << endl;
-		WSACleanup();
-		return 1;
-	}
-
-	// Pedir IP y puerto
+	// Pedir IP y puerto. Intentar conexion a esos datos
 	int puerto=0;
 	string ip="";
-	
-	while (ip != "127.0.0.1" || puerto != 54000) {
+
+	while (true) {
 		system("cls");
 		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl ;
 		cout << "Direccion IP: "; 
 		cin >> ip;
 		cout << "Puerto: ";
 		cin >> puerto;
-	}
 
-	if (puerto == 54000 && ip == "127.0.0.1"){
+		// Iniciar Winsock
+		WSAData data;
+		WORD ver = MAKEWORD(2, 2);
+		int wsResult = WSAStartup(ver, &data);
+		if (wsResult != 0)
+		{
+			cerr << "No se pudo arrancar Winsock" << endl;
+			return 1;
+		}
+
+		// Crear socket
+		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+		if (sock == INVALID_SOCKET)
+		{
+			cerr << "No se pudo crear el socket" << endl;
+			WSACleanup();
+			return 1;
+		}
+
 		// Hint de estructura de informacion para la conexion
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
@@ -58,33 +56,36 @@ int main()
 
 		// Conectar al servidor
 		int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
-		if (connResult == SOCKET_ERROR)
-		{
-			cerr << "No se pudo conectar al servidor: " << WSAGetLastError() << endl;
+		if (connResult == SOCKET_ERROR){
+			cerr << "No se pudo conectar al servidor" << endl;
 			closesocket(sock);
-			WSACleanup();
-			return 1;
+		}
+		else {
+			// Si se conectó bien hacer ...
+			system("pause");
+
+			//// Solicitar datos de login al usuario
+			//string mensaje = "login;javi;123";
+			//// Enviar pedido de login
+			//if (enviarMensaje(mensaje, sock) == 1) {
+			//	closesocket(sock);
+			//	WSACleanup();
+			//	return 1;
+			//}
+
+			//// Recibir respuesta del servidor
+			//string respuesta = recibirMensaje(sock);
+			//if (respuesta != "") {
+			//	cout << "Respuesta del servidor: " << respuesta << endl;
+			//}
 		}
 
-		// Enviar pedido de login
-		string mensaje = "login;javi;123";
-		if (enviarMensaje(mensaje, sock) == 1) {
-			closesocket(sock);
-			WSACleanup();
-			return 1;
-		}
+		// Cerrar el socket y limpiar Winsock
+		closesocket(sock);
+		WSACleanup();
+	}	
 
-		// Recibir respuesta del servidor
-		string respuesta = recibirMensaje(sock);
-		if (respuesta != "") {
-			cout << "Respuesta del servidor: " << respuesta << endl;
-		}
-
-	}
-	
-	// Cerrar el socket y limpiar Winsock
-	closesocket(sock);
-	return WSACleanup();
+	return 0;
 }
 
 // Implementaciones
