@@ -72,22 +72,22 @@ int main()
 			
 			while (respuesta == "login") {
 				system("cls");
-				if (respuesta == "login") {
-					// Solicitar datos de login al usuario
-					string usuario = "";
-					string password = "";
-					cout << "Usuario: ";
-					cin >> usuario;
-					cout << "Contraseña: ";
-					cin >> password;
+				
+				// Solicitar datos de login al usuario
+				string usuario = "";
+				string password = "";
+				cout << "Usuario: ";
+				cin >> usuario;
+				cout << "Contraseña: ";
+				cin >> password;
 
-					string mensaje = "login;" + usuario + ";" + password;
+				string mensaje = "login;" + usuario + ";" + password;
 
-					// Enviar pedido de login
-					if (enviarMensaje(mensaje, sock) == 1) {
-						cout << "Error al enviar el mensaje" << endl;
-					}
+				// Enviar pedido de login
+				if (enviarMensaje(mensaje, sock) == 1) {
+					cout << "Error al enviar el mensaje" << endl;
 				}
+				
 				respuesta = recibirMensaje(sock);
 				cout << "Respuesta del login: " << respuesta << endl;
 			}

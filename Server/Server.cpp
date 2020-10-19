@@ -180,7 +180,7 @@ bool validarLogin(string &mensaje) {
 	}
 	else {
 		// Leer registro del archivo de credenciales
-		while (!encontrado && getline(archivo, usuario, delimitador) && getline(archivo, password, delimitador)) {
+		while (getline(archivo, usuario, delimitador) && getline(archivo, password) && !encontrado) {
 			if (usuario == usuarioCliente && password == passCliente) {
 				encontrado = true;
 			}
@@ -215,11 +215,11 @@ void login(SOCKET &clientSocket) {
 	string respuesta;
 	int intentos=0;
 
-	while (!logueado && !timeoutCliente) {
-		// Enviar pedido de login al cliente
-		mensaje = "login";
-		enviarMensaje(mensaje, clientSocket);
+	// Enviar pedido de login al cliente
+	mensaje = "login";
+	enviarMensaje(mensaje, clientSocket);
 
+	while (!logueado && !timeoutCliente && mensaje != "excesoDeIntentos") {
 		// Recibir datos de login del cliente
 		resultado = recv(clientSocket, buf, 4096, 0);
 		if (resultado == SOCKET_ERROR) {
