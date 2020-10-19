@@ -9,19 +9,20 @@
 using namespace std;
 
 //Declaraciones
-string procesarMensaje(string &mensaje, SOCKET &clientSocket);
+string validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
+void login(SOCKET& clientSocket);
 
 int main()
 {
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
 
+	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Iniciar Winsock
 		WSADATA wsData;
 		WORD ver = MAKEWORD(2, 2);
-		char buf[4096];
 
 		int iResult = WSAStartup(ver, &wsData);
 		if (iResult != 0)
@@ -49,14 +50,12 @@ int main()
 		hint.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
 		bind(listening, (sockaddr*)&hint, sizeof(hint));
 
-
 		// Setear el socket para recibir conexiones
 		iResult = listen(listening, SOMAXCONN);
 		if (iResult == SOCKET_ERROR) {
 			cout << "Error al setear el socket como listen" << endl;
 			closesocket(listening);
-			WSACleanup();
-			return 1;
+			break;
 		}
 		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
 
@@ -68,8 +67,7 @@ int main()
 		if (clientSocket == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket del cliente" << endl;
-			WSACleanup();
-			return 1;
+			break;
 		}
 
 		char host[NI_MAXHOST];		// Nombre del equipo remoto
@@ -91,62 +89,61 @@ int main()
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
-		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
-		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
-
-		// Enviar pedido de usuario y contraseña
-
-		// Recibir hasta que el cliente corte la conexion
-		string respuesta = "";
+		int timeout = 60000;  // Tiempo de inactividad maximo en milisegundos 
 		bool timeoutCliente = false;
-		do {
-			iResult = recv(clientSocket, buf, 4096, 0);
-			if (iResult == SOCKET_ERROR) {
-				if (WSAGetLastError() == 10060) {
-					cerr << "Cliente desconectado (TIMEOUT)" << endl;
-					timeoutCliente = true;
-					break;
-				}
-			}
-			if (iResult > 0) {
-				/*cout << "Bytes recibidos: " << iResult << endl;*/
-				string mensaje = "";
-				mensaje.assign(buf);
-				cout << "Mensaje recibido: " << mensaje << endl;
+		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
+		
+		// Enviar pedido de usuario y contraseña
+		login(clientSocket);
 
-				// Procesar la peticion y responder
-				respuesta = procesarMensaje(mensaje, clientSocket);
-			}
-			else if (iResult == 0);
-				/*cout << "Cliente desconectado" << endl;*/
-			else {
-				cout << "Error in recv()" << endl;
-				closesocket(clientSocket);
-				WSACleanup();
-				return 1;
-			}
-		} while (iResult > 0);
+		//// Atender peticiones del cliente hasta que se desconecte
+		//char buf[4096];
+		//string respuesta;
+		//bool desconectado = false;
+		//
+		//// Recibir hasta que el cliente corte la conexion
+		//do {
+		//	iResult = recv(clientSocket, buf, 4096, 0);
+		//	if (iResult == SOCKET_ERROR) {
+		//		if (WSAGetLastError() == 10060) {
+		//			cerr << "Cliente desconectado (TIMEOUT)" << endl;
+		//			timeoutCliente = true;
+		//			break;
+		//		}
+		//		else {
+		//			cerr << "Error al intentar escuchar al cliente" << endl << endl;
+		//			timeoutCliente = true;
+		//			break;
+		//		}
+		//	}
+		//	if (iResult > 0) {
+		//		string mensaje = "";
+		//		mensaje.assign(buf);
+		//		cout << "Mensaje recibido: " << mensaje << endl;
 
-		// Enviar respuesta al cliente
-		if (respuesta != "" && !timeoutCliente) {
-			int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
-			if (iResult == SOCKET_ERROR) {
-				cout << "Error al enviar la respuesta" << endl;
-				closesocket(clientSocket);
-				WSACleanup();
-				return 1;
-			}
-			/*cout << "Bytes enviados: " << iResult << endl;*/
-			cout << "Respuesta enviada: " << respuesta << endl << endl;
-		}
+		//		// Procesar la peticion y preparar la respuesta
 
-		// Apagar la conexion
+		//		// Enviar respuesta al cliente
+		//		int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
+		//		if (iResult == SOCKET_ERROR) {
+		//			cout << "Error al enviar la respuesta" << endl;
+		//		} else 
+		//			cout << "Respuesta enviada: " << respuesta << endl << endl;
+		//	}
+		//	else if (iResult == 0)
+		//		desconectado = true;
+		//	else {
+		//		cout << "Error in recv()" << endl;
+		//		desconectado = true;
+		//	}
+		//} while (iResult > 0  && !timeoutCliente && !desconectado);
+		
+		cout << "Cliente desconectado" << endl << "--------------------------------------------------" << endl << endl;
+
+		// Apagar el socket antes de cerrarlo
 		iResult = shutdown(clientSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
-			cout << "Error al apagar conexion" << endl;
-			closesocket(clientSocket);
-			WSACleanup();
-			return 1;
+			cout << "Error al apagar el socket" << endl;
 		}
 
 		// Cerrar el socket
@@ -161,16 +158,13 @@ int main()
 
 // Implementaciones
 
-string procesarMensaje(string &mensaje, SOCKET &clientSocket) {
+string validarLogin(string &mensaje) {
 	string delimitador = ";";
 	string comando = mensaje.substr(0, mensaje.find(delimitador));
-	string respuesta = "";
+	string respuesta;
 
-	cout << "Comando recibido: " << comando << endl;
-
-	if (comando == "login") {
-		respuesta = "loginOk";
-	}
+	//Validar login aqui
+	respuesta = "loginOK";
 
 	return respuesta;
 }
@@ -181,18 +175,55 @@ int enviarMensaje(string& mensaje, SOCKET& sock) {
 	// Intentar enviar mensaje
 	iResult = send(sock, mensaje.c_str(), (int)strlen(mensaje.c_str()) + 1, 0);
 	if (iResult == SOCKET_ERROR) {
-		cout << "Fallo en el envio del mensaje" << endl;
+		cout << "Fallo en el envio del mensaje " << WSAGetLastError() << endl;
 		return 1;
 	}
 
 	cout << "Mensaje enviado: " << mensaje << endl;
 
-	// Apagar el socket ya que no se enviará mas data
-	iResult = shutdown(sock, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		cout << "Fallo al apagar el socket" << endl;
-		return 1;
-	}
-
 	return iResult;
+}
+
+void login(SOCKET &clientSocket) {
+	bool logueado = false;
+	bool timeoutCliente = false;
+	string mensaje;
+	int resultado;
+	char buf[4096];
+	string respuesta;
+
+	while (!logueado && !timeoutCliente) {
+		// Enviar pedido de login al cliente
+		mensaje = "login";
+		enviarMensaje(mensaje, clientSocket);
+
+		// Recibir datos de login del cliente
+		resultado = recv(clientSocket, buf, 4096, 0);
+		if (resultado == SOCKET_ERROR) {
+			if (WSAGetLastError() == 10060) {
+				cerr << "Cliente desconectado (TIMEOUT)" << endl;
+				timeoutCliente = true;
+			}
+			else {
+				cerr << "Error al intentar escuchar al cliente" << endl << endl;
+				timeoutCliente = true;
+			}
+		}
+		if (!timeoutCliente) {
+			respuesta.assign(buf);
+			cout << "Mensaje recibido: " << respuesta << endl;
+		}
+	
+		// Validar el login
+		mensaje = validarLogin(respuesta);
+		
+		if (mensaje == "loginOK") {
+			logueado = true;
+		}
+
+		//Enviar respuesta
+		if (!timeoutCliente) {
+			enviarMensaje(mensaje, clientSocket);
+		}
+	}
 }
