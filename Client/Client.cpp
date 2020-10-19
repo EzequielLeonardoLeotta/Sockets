@@ -92,8 +92,13 @@ int main()
 				cout << "Respuesta del login: " << respuesta << endl;
 			}
 
-			// Mostrar el menú
-			cout << endl << "Te logueaste. Pasá al menú amiguito" << endl;
+			if (respuesta == "excesoDeIntentos") {
+				cout << "Ha excedido la cantidad de intentos permitidos. Desconectado" << endl;
+			}
+			else {
+				// Mostrar el menú
+				cout << endl << "Te logueaste. Pasá al menú amiguito" << endl;
+			}
 			system("pause");
 		}
 

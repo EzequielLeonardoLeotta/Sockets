@@ -3,13 +3,15 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #pragma comment (lib, "ws2_32.lib")
 
 using namespace std;
 
 //Declaraciones
-string validarLogin(string &mensaje);
+bool validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
 
@@ -89,7 +91,7 @@ int main()
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
-		int timeout = 60000;  // Tiempo de inactividad maximo en milisegundos 
+		int timeout = 30000;  // Tiempo de inactividad maximo en milisegundos 
 		bool timeoutCliente = false;
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 		
@@ -138,7 +140,7 @@ int main()
 		//	}
 		//} while (iResult > 0  && !timeoutCliente && !desconectado);
 		
-		cout << "Cliente desconectado" << endl << "--------------------------------------------------" << endl << endl;
+		cout << "--------------------------------------------------" << endl << endl;
 
 		// Apagar el socket antes de cerrarlo
 		iResult = shutdown(clientSocket, SD_SEND);
@@ -158,15 +160,35 @@ int main()
 
 // Implementaciones
 
-string validarLogin(string &mensaje) {
-	string delimitador = ";";
-	string comando = mensaje.substr(0, mensaje.find(delimitador));
-	string respuesta;
+bool validarLogin(string &mensaje) {
+	// Sacar del mensaje sus 3 valores
+	char delimitador = ';';
+	string comando, usuarioCliente, passCliente;
+	istringstream input;
+	input.str(mensaje);
+	getline(input, comando, delimitador);
+	getline(input, usuarioCliente, delimitador);
+	getline(input, passCliente, delimitador);
 
-	//Validar login aqui
-	respuesta = "loginOK";
+	// Leer archivo y comparar valores
+	bool encontrado=false;
+	string usuario, password, respuesta;
+	ifstream archivo;
+	archivo.open("credenciales.txt", ios::in);
+	if (archivo.fail()) {
+		cout << endl << "ERROR!: No se pudo abrir el archivo de credenciales" << endl;
+	}
+	else {
+		// Leer registro del archivo de credenciales
+		while (!encontrado && getline(archivo, usuario, delimitador) && getline(archivo, password, delimitador)) {
+			if (usuario == usuarioCliente && password == passCliente) {
+				encontrado = true;
+			}
+		}
+	}
+	archivo.close();	
 
-	return respuesta;
+	return encontrado;
 }
 
 int enviarMensaje(string& mensaje, SOCKET& sock) {
@@ -191,6 +213,7 @@ void login(SOCKET &clientSocket) {
 	int resultado;
 	char buf[4096];
 	string respuesta;
+	int intentos=0;
 
 	while (!logueado && !timeoutCliente) {
 		// Enviar pedido de login al cliente
@@ -209,16 +232,23 @@ void login(SOCKET &clientSocket) {
 				timeoutCliente = true;
 			}
 		}
+
 		if (!timeoutCliente) {
 			respuesta.assign(buf);
 			cout << "Mensaje recibido: " << respuesta << endl;
 		}
 	
 		// Validar el login
-		mensaje = validarLogin(respuesta);
-		
-		if (mensaje == "loginOK") {
+		if (validarLogin(respuesta)) {
+			mensaje = "loginOK";
 			logueado = true;
+		}
+		else {
+			intentos++;
+			// Si llegué a 3 intentos tirar error
+			if (intentos == 3) {
+				mensaje = "excesoDeIntentos";
+			}
 		}
 
 		//Enviar respuesta
