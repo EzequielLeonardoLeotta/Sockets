@@ -60,40 +60,52 @@ int main()
 		// Conectar al servidor
 		int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
 		if (connResult == SOCKET_ERROR){
-			cerr << "No se pudo conectar al servidor" << endl;
-			closesocket(sock);
+			cerr << "No se pudo conectar al servidor" << endl << endl;
+			system("pause");
 		}
 		else {
 			// Si se conectó bien hacer ...
-			cout << endl << "Conectado al servidor" << endl << endl;
-			system("pause");
 
-			// Solicitar datos de login al usuario
-			system("cls");
-			string usuario = "";
-			string password = "";
-			cout << "Usuario: ";
-			cin >> usuario;
-			cout << "Contraseña: ";
-			cin >> password;
+			// Recibir peticion de login del servidor
+			string respuesta;
+			respuesta = recibirMensaje(sock);
+			
+			while (respuesta == "login") {
+				system("cls");
+				
+				// Solicitar datos de login al usuario
+				string usuario = "";
+				string password = "";
+				cout << "Usuario: ";
+				cin >> usuario;
+				cout << "Contraseña: ";
+				cin >> password;
 
-			string mensaje = "login;" + usuario + ";" + password;
+				string mensaje = "login;" + usuario + ";" + password;
 
-			// Enviar pedido de login
-			if (enviarMensaje(mensaje, sock) == 1) {
-				cout << "Error al enviar el mensaje" << endl;
-				/*closesocket(sock);
-				WSACleanup();
-				return 1;*/
+				// Enviar pedido de login
+				if (enviarMensaje(mensaje, sock) == 1) {
+					cout << "Error al enviar el mensaje" << endl;
+				}
+				
+				respuesta = recibirMensaje(sock);
+				cout << "Respuesta del login: " << respuesta << endl;
+			}
+
+			if (respuesta == "excesoDeIntentos") {
+				cout << "Ha excedido la cantidad de intentos permitidos. Desconectado" << endl;
 			}
 			else {
-				// Recibir respuesta del servidor
-				string respuesta = recibirMensaje(sock);
-				if (respuesta != "") {
-					cout << "Respuesta del servidor: " << respuesta << endl << endl;
-					system("pause");
-				}
+				// Mostrar el menú
+				cout << endl << "Te logueaste. Pasá al menú amiguito" << endl;
 			}
+			system("pause");
+		}
+
+		// Apagar el socket antes de cerrarlo
+		int iResult = shutdown(sock, SD_SEND);
+		if (iResult == SOCKET_ERROR) {
+			cout << "Error al apagar el socket" << endl;
 		}
 
 		// Cerrar el socket y limpiar Winsock
@@ -169,32 +181,17 @@ int enviarMensaje(string &mensaje, SOCKET &sock) {
 
 	cout << "Mensaje enviado: " << mensaje << endl;
 
-	// Apagar el socket ya que no se enviará mas data
-	iResult = shutdown(sock, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		cout << "Fallo al apagar el socket" << endl;
-		return 1;
-	}
-
 	return iResult;
 }
 
 string recibirMensaje(SOCKET& sock) {
 	int iResultado;
 	char bufer[4096];
+	string respuesta;
 
 	// Recibir hasta que el servidor corte la conexion
-	do {
-		iResultado = recv(sock, bufer, 4096, 0);
-		if (iResultado > 0);
-		/*cout << "Bytes recibidos: " << iResultado << endl;*/
-		else if (iResultado == 0);
-			/*cout << "Conexion cerrada" << endl;*/
-		else
-			cout << "Error en recv()" << endl;
-	} while (iResultado > 0);
+	iResultado = recv(sock, bufer, 4096, 0);
 
-	string respuesta="";
 	respuesta.assign(bufer);
 
 	return respuesta;
