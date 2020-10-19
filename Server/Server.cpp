@@ -10,9 +10,13 @@ using namespace std;
 
 //Declaraciones
 string procesarMensaje(string &mensaje, SOCKET &clientSocket);
+int enviarMensaje(string& mensaje, SOCKET& sock);
 
 int main()
 {
+	//Caracteres en español
+	setlocale(LC_ALL, "Spanish");
+
 	while (true) {
 		// Iniciar Winsock
 		WSADATA wsData;
@@ -90,6 +94,8 @@ int main()
 		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 
+		// Enviar pedido de usuario y contraseña
+
 		// Recibir hasta que el cliente corte la conexion
 		string respuesta = "";
 		bool timeoutCliente = false;
@@ -103,7 +109,7 @@ int main()
 				}
 			}
 			if (iResult > 0) {
-				cout << "Bytes recibidos: " << iResult << endl;
+				/*cout << "Bytes recibidos: " << iResult << endl;*/
 				string mensaje = "";
 				mensaje.assign(buf);
 				cout << "Mensaje recibido: " << mensaje << endl;
@@ -111,8 +117,8 @@ int main()
 				// Procesar la peticion y responder
 				respuesta = procesarMensaje(mensaje, clientSocket);
 			}
-			else if (iResult == 0)
-				cout << "Cliente desconectado" << endl;
+			else if (iResult == 0);
+				/*cout << "Cliente desconectado" << endl;*/
 			else {
 				cout << "Error in recv()" << endl;
 				closesocket(clientSocket);
@@ -130,8 +136,8 @@ int main()
 				WSACleanup();
 				return 1;
 			}
-			cout << "Bytes enviados: " << iResult << endl;
-			cout << "Respuesta enviada: " << respuesta << endl;
+			/*cout << "Bytes enviados: " << iResult << endl;*/
+			cout << "Respuesta enviada: " << respuesta << endl << endl;
 		}
 
 		// Apagar la conexion
@@ -167,4 +173,26 @@ string procesarMensaje(string &mensaje, SOCKET &clientSocket) {
 	}
 
 	return respuesta;
+}
+
+int enviarMensaje(string& mensaje, SOCKET& sock) {
+	int iResult = 0;
+
+	// Intentar enviar mensaje
+	iResult = send(sock, mensaje.c_str(), (int)strlen(mensaje.c_str()) + 1, 0);
+	if (iResult == SOCKET_ERROR) {
+		cout << "Fallo en el envio del mensaje" << endl;
+		return 1;
+	}
+
+	cout << "Mensaje enviado: " << mensaje << endl;
+
+	// Apagar el socket ya que no se enviará mas data
+	iResult = shutdown(sock, SD_SEND);
+	if (iResult == SOCKET_ERROR) {
+		cout << "Fallo al apagar el socket" << endl;
+		return 1;
+	}
+
+	return iResult;
 }
