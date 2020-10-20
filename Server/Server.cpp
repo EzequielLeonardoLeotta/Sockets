@@ -98,7 +98,8 @@ int main()
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
 
-		//// Atender peticiones del cliente hasta que se desconecte
+		// Atender peticiones del cliente hasta que se desconecte
+
 		//char buf[4096];
 		//string respuesta;
 		//bool desconectado = false;

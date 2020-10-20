@@ -7,11 +7,10 @@
 using namespace std;
 
 // Declaraciones
-void altaServicio();
-void gestionPasaje();
-void verRegistro();
-void cerrarSesion();
-void menu();
+void altaServicio(SOCKET& sock);
+void gestionPasaje(SOCKET& sock);
+void verRegistro(SOCKET& sock);
+void menu(SOCKET& sock);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 string recibirMensaje(SOCKET& sock);
 
@@ -26,7 +25,7 @@ int main()
 	// Pedir IP y puerto. Intentar conexion a esos datos
 	while (true) {
 		system("cls");
-		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl ;
+		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl << endl;
 		cout << "Direccion IP: "; 
 		cin >> ip;
 		cout << "Puerto: ";
@@ -60,7 +59,7 @@ int main()
 		// Conectar al servidor
 		int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
 		if (connResult == SOCKET_ERROR){
-			cerr << "No se pudo conectar al servidor" << endl << endl;
+			cerr << endl << "No se pudo conectar al servidor" << endl << endl;
 			system("pause");
 		}
 		else {
@@ -93,12 +92,14 @@ int main()
 			}
 
 			if (respuesta == "excesoDeIntentos") {
-				cout << "Ha excedido la cantidad de intentos permitidos. Desconectado" << endl;
+				cout << "Se superó la cantidad máxima de intentos de ingreso" << endl;
 			}
 			else {
 				// Mostrar el menú
-				cout << endl << "Te logueaste. Pasá al menú amiguito" << endl;
+				menu(sock);
 			}
+			
+			cout << endl << "Saliendo del sistema" << endl << endl;
 			system("pause");
 		}
 
@@ -117,55 +118,61 @@ int main()
 }
 
 // Implementaciones
-void altaServicio() {
+void altaServicio(SOCKET &sock) {
 	system("cls");
-	cout << "Alta serv" << endl;
+	cout << "Alta de servicios" << endl << endl;
 	system("pause");
 
 }
 
-void gestionPasaje() {
+void gestionPasaje(SOCKET& sock) {
 	system("cls");
-	cout << "gestion";
+	cout << "Gestion de pasajes" << endl << endl;
 	system("pause");
 
 }
 
-void verRegistro() {
+void verRegistro(SOCKET& sock) {
 	system("cls");
-	cout << "ver Registro";
+	cout << "Ver registro de actividades" << endl << endl;
 	system("pause");
 
 }
 
-void cerrarSesion() {
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	system("cls");
-	closesocket(sock);
-	cout << "Cerrar sesion" << endl;
-	system("pause");
-
-}
-
-void menu() {
+void menu(SOCKET &sock) {
 	int opcion;
-	cout << "1_Alta servicio" << endl;
-	cout << "2_Gestionar pasajes" << endl;
-	cout << "3_Ver registro de actividades" << endl;
-	cout << "4_Cerrar Sesion" << endl;
-	cout << "Elija una opcion: ";
-	cin >> opcion;
-	switch (opcion) {
-	case 1:
-		altaServicio();
-		break;
-	case 2:
-		gestionPasaje();
-		break;
-	case 3:
-		verRegistro();
-	case 4:
-		cerrarSesion();
+	bool conectado = true;
+
+	while (conectado) {
+		opcion = 0;
+		while (opcion < 1 || opcion>4) {
+			system("cls");
+			cout << "Menú principal" << endl << endl
+				<< "1: Alta servicio" << endl
+				<< "2: Gestionar pasajes" << endl
+				<< "3: Ver registro de actividades" << endl
+				<< "4: Cerrar sesión" << endl << endl
+				<< "Elija una opción: ";
+			cin >> opcion;
+		}
+
+		switch (opcion) {
+		case 1:
+			altaServicio(sock);
+			break;
+		case 2:
+			gestionPasaje(sock);
+			break;
+		case 3:
+			verRegistro(sock);
+			break;
+		case 4:
+			// Salir del menú para volver a la conexión al servidor
+			conectado = false;
+			break;
+		default:
+			break;
+		}
 	}
 }
 
