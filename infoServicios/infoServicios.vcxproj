@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f38c477b-4c9a-4d62-b484-e64689b13ed6}</ProjectGuid>
-    <RootNamespace>Client</RootNamespace>
+    <ProjectGuid>{7be56769-2461-42f3-9280-7239a9ddc60b}</ProjectGuid>
+    <RootNamespace>infoServicios</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -139,10 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Client.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="infoServicios.bin" />
+    <ClCompile Include="info.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
