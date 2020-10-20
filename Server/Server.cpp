@@ -251,6 +251,7 @@ void login(SOCKET &clientSocket) {
 			}
 		}
 
+
 		//Enviar respuesta
 		if (!timeoutCliente) {
 			enviarMensaje(mensaje, clientSocket);

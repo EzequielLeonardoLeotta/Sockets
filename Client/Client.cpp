@@ -7,11 +7,11 @@
 using namespace std;
 
 // Declaraciones
-void altaServicio();
+void altaServicio(SOCKET& sock);
 void gestionPasaje();
 void verRegistro();
 void cerrarSesion();
-void menu();
+void menu(SOCKET& sock);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 string recibirMensaje(SOCKET& sock);
 
@@ -90,6 +90,7 @@ int main()
 				
 				respuesta = recibirMensaje(sock);
 				cout << "Respuesta del login: " << respuesta << endl;
+				menu(sock);
 			}
 
 			if (respuesta == "excesoDeIntentos") {
@@ -117,9 +118,23 @@ int main()
 }
 
 // Implementaciones
-void altaServicio() {
+void altaServicio(SOCKET& sock) {
+	string origen,fecha,turno,alta;
+
 	system("cls");
-	cout << "Alta serv" << endl;
+	cout << "ALTA DE SERVICIO" << endl;
+	cout << "Ingrese origen: "; cin >> origen; 
+	cout << "ingrese Fecha: "; cin >> fecha;
+	cout << "ingrese Turno: "; cin >> turno;
+	alta ="1;" +origen + ";" + fecha + ";" + turno;
+
+	if (enviarMensaje(alta, sock)!=1){
+		cout << "Servicio Generado: "+alta;
+	}
+	else {
+		cout << "Error al enviar mensaje";
+	}
+	
 	system("pause");
 
 }
@@ -147,7 +162,7 @@ void cerrarSesion() {
 
 }
 
-void menu() {
+void menu(SOCKET& sock) {
 	int opcion;
 	cout << "1_Alta servicio" << endl;
 	cout << "2_Gestionar pasajes" << endl;
@@ -157,7 +172,7 @@ void menu() {
 	cin >> opcion;
 	switch (opcion) {
 	case 1:
-		altaServicio();
+		altaServicio(sock);
 		break;
 	case 2:
 		gestionPasaje();
