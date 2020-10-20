@@ -190,7 +190,7 @@ int enviarMensaje(string &mensaje, SOCKET &sock) {
 		return 1;
 	}
 
-	cout << "Mensaje enviado: " << mensaje << endl;
+	/*cout << "Mensaje enviado: " << mensaje << endl;*/
 
 	return iResult;
 }
