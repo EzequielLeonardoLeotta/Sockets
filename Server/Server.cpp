@@ -14,6 +14,7 @@ using namespace std;
 bool validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
+void atenderPeticiones(SOCKET& clientSocket);
 
 int main()
 {
@@ -99,47 +100,7 @@ int main()
 		login(clientSocket);
 
 		// Atender peticiones del cliente hasta que se desconecte
-
-		//char buf[4096];
-		//string respuesta;
-		//bool desconectado = false;
-		//
-		//// Recibir hasta que el cliente corte la conexion
-		//do {
-		//	iResult = recv(clientSocket, buf, 4096, 0);
-		//	if (iResult == SOCKET_ERROR) {
-		//		if (WSAGetLastError() == 10060) {
-		//			cerr << "Cliente desconectado (TIMEOUT)" << endl;
-		//			timeoutCliente = true;
-		//			break;
-		//		}
-		//		else {
-		//			cerr << "Error al intentar escuchar al cliente" << endl << endl;
-		//			timeoutCliente = true;
-		//			break;
-		//		}
-		//	}
-		//	if (iResult > 0) {
-		//		string mensaje = "";
-		//		mensaje.assign(buf);
-		//		cout << "Mensaje recibido: " << mensaje << endl;
-
-		//		// Procesar la peticion y preparar la respuesta
-
-		//		// Enviar respuesta al cliente
-		//		int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
-		//		if (iResult == SOCKET_ERROR) {
-		//			cout << "Error al enviar la respuesta" << endl;
-		//		} else 
-		//			cout << "Respuesta enviada: " << respuesta << endl << endl;
-		//	}
-		//	else if (iResult == 0)
-		//		desconectado = true;
-		//	else {
-		//		cout << "Error in recv()" << endl;
-		//		desconectado = true;
-		//	}
-		//} while (iResult > 0  && !timeoutCliente && !desconectado);
+		atenderPeticiones(clientSocket);
 		
 		cout << "--------------------------------------------------" << endl << endl;
 
@@ -256,5 +217,49 @@ void login(SOCKET &clientSocket) {
 		if (!timeoutCliente) {
 			enviarMensaje(mensaje, clientSocket);
 		}
+	}
+}
+
+void atenderPeticiones(SOCKET &clientSocket) {
+	char buf[4096];
+	string peticion;
+	bool timeoutCliente = false;
+	bool desconectado = false;
+	int iResult;
+	string respuesta;
+
+	// Recibir hasta que el cliente corte la conexion
+	while (!desconectado && !timeoutCliente){
+		iResult = recv(clientSocket, buf, 4096, 0);
+		if (iResult == SOCKET_ERROR) {
+			if (WSAGetLastError() == 10060) {
+				cerr << "Cliente desconectado (TIMEOUT)" << endl;
+				timeoutCliente = true;
+				break;
+			}
+			else {
+				cerr << "Error al intentar escuchar al cliente" << endl;
+				desconectado = true;
+				break;
+			}
+		}
+
+		// Si no hubo TIMEOUT del cliente
+		if (!timeoutCliente || !desconectado) {
+			// Mostrar la peticion recibida
+			peticion.assign(buf);
+			cout << "Mensaje recibido: " << peticion << endl;
+
+			// Procesar la petición
+			respuesta = "hayQueProcesarEsto";
+
+			//Enviar respuesta
+			string comando = peticion.substr(0, peticion.find(';'));
+			if (comando == "cerrarSesion")
+				desconectado = true;
+			else
+				enviarMensaje(respuesta, clientSocket);
+		}
+		
 	}
 }

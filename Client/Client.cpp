@@ -67,20 +67,21 @@ int main()
 
 			// Recibir peticion de login del servidor
 			string respuesta;
+			string mensaje;
+			string usuario;
+			string password;
 			respuesta = recibirMensaje(sock);
 			
 			while (respuesta == "login") {
 				system("cls");
 				
 				// Solicitar datos de login al usuario
-				string usuario = "";
-				string password = "";
 				cout << "Usuario: ";
 				cin >> usuario;
 				cout << "Contraseña: ";
 				cin >> password;
 
-				string mensaje = "login;" + usuario + ";" + password;
+				mensaje = "login;" + usuario + ";" + password;
 
 				// Enviar pedido de login
 				if (enviarMensaje(mensaje, sock) == 1) {
@@ -99,10 +100,13 @@ int main()
 				menu(sock);
 			}
 			
+			// Enviar peticion de cierre de sesion
+			respuesta = "cerrarSesion;" + usuario;
+			enviarMensaje(respuesta,sock);
 			cout << endl << "Saliendo del sistema" << endl << endl;
 			system("pause");
 		}
-
+		
 		// Apagar el socket antes de cerrarlo
 		int iResult = shutdown(sock, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
