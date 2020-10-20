@@ -91,7 +91,7 @@ int main()
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
-		int timeout = 30000;  // Tiempo de inactividad maximo en milisegundos 
+		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
 		bool timeoutCliente = false;
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 		
