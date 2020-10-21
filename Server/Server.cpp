@@ -14,12 +14,13 @@ using namespace std;
 bool validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
+void altaServicio(string mensaje);
 
 int main()
 {
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
-
+	altaServicio("cordoba;12/3/2020;mañana");
 	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Iniciar Winsock
@@ -87,6 +88,9 @@ int main()
 				ntohs(client.sin_port) << endl;
 		}
 
+
+
+
 		// Cerrar socket de escucha porque se conectó un cliente
 		closesocket(listening);
 
@@ -97,7 +101,7 @@ int main()
 		
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
-
+		altaServicio("cordoba;12/05/2020;manana");
 		//// Atender peticiones del cliente hasta que se desconecte
 		//char buf[4096];
 		//string respuesta;
@@ -159,6 +163,22 @@ int main()
 }
 
 // Implementaciones
+void leerServicios() {
+
+}
+
+
+void altaServicio(string mensaje) {
+	//ejemplo altaServicio("cordoba");
+
+	// si inserto un string largo explota ejemplo  string prueba = "cordoba;12/05/2020;manana";
+		string prueba1 = "cordoba";
+		fstream archi("infoServicios.bin", ios::binary | ios::out | ios::app);
+			archi.write((char*)&mensaje, sizeof(string));
+
+			archi.close();
+	
+}
 
 bool validarLogin(string &mensaje) {
 	// Sacar del mensaje sus 3 valores
