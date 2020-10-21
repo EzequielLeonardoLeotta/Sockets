@@ -172,9 +172,13 @@ void altaServicio(string mensaje) {
 	//ejemplo altaServicio("cordoba");
 
 	// si inserto un string largo explota ejemplo  string prueba = "cordoba;12/05/2020;manana";
-		string prueba1 = "cordoba";
+		string prueba1 = "cordoba;12/05/2020;manana";
+		string prueba2 = "MardelPlata;12/05/2020;tarde";
+		string prueba3 = "Salta;12/05/2020;noche";
 		fstream archi("infoServicios.bin", ios::binary | ios::out | ios::app);
-			archi.write((char*)&mensaje, sizeof(string));
+			archi.write((char*)&prueba1, sizeof(string));
+			archi.write((char*)&prueba2, sizeof(string));
+			archi.write((char*)&prueba3, sizeof(string));
 
 			archi.close();
 	
