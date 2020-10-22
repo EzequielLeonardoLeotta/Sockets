@@ -15,6 +15,7 @@ bool validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
 void altaServicio(string mensaje);
+void atenderPeticiones(SOCKET& clientSocket);
 
 int main()
 {
@@ -95,13 +96,13 @@ int main()
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
-		int timeout = 30000;  // Tiempo de inactividad maximo en milisegundos 
+		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
 		bool timeoutCliente = false;
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 		
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
-		altaServicio("cordoba;12/05/2020;manana");
+		//altaServicio("cordoba;12/05/2020;manana");
 		//// Atender peticiones del cliente hasta que se desconecte
 		//char buf[4096];
 		//string respuesta;
@@ -143,6 +144,8 @@ int main()
 		//		desconectado = true;
 		//	}
 		//} while (iResult > 0  && !timeoutCliente && !desconectado);
+		// Atender peticiones del cliente hasta que se desconecte
+		atenderPeticiones(clientSocket);
 		
 		cout << "--------------------------------------------------" << endl << endl;
 
@@ -172,15 +175,15 @@ void altaServicio(string mensaje) {
 	//ejemplo altaServicio("cordoba");
 
 	// si inserto un string largo explota ejemplo  string prueba = "cordoba;12/05/2020;manana";
-		string prueba1 = "cordoba;12/05/2020;manana";
-		string prueba2 = "MardelPlata;12/05/2020;tarde";
-		string prueba3 = "Salta;12/05/2020;noche";
+		//string prueba1 = "cordoba;12/05/2020;manana";
+		//string prueba2 = "MardelPlata;12/05/2020;tarde";
+		//string prueba3 = "Salta;12/05/2020;noche";
 		fstream archi("infoServicios.bin", ios::binary | ios::out | ios::app);
-			archi.write((char*)&prueba1, sizeof(string));
-			archi.write((char*)&prueba2, sizeof(string));
-			archi.write((char*)&prueba3, sizeof(string));
+			//archi.write((char*)&prueba1, sizeof(string));
+			//archi.write((char*)&prueba2, sizeof(string));
+	archi.write((char*)&mensaje, sizeof(string));
 
-			archi.close();
+	archi.close();
 	
 }
 
@@ -280,5 +283,49 @@ void login(SOCKET &clientSocket) {
 		if (!timeoutCliente) {
 			enviarMensaje(mensaje, clientSocket);
 		}
+	}
+}
+
+void atenderPeticiones(SOCKET &clientSocket) {
+	char buf[4096];
+	string peticion;
+	bool timeoutCliente = false;
+	bool desconectado = false;
+	int iResult;
+	string respuesta;
+
+	// Recibir hasta que el cliente corte la conexion
+	while (!desconectado && !timeoutCliente){
+		iResult = recv(clientSocket, buf, 4096, 0);
+		if (iResult == SOCKET_ERROR) {
+			if (WSAGetLastError() == 10060) {
+				cerr << "Cliente desconectado (TIMEOUT)" << endl;
+				timeoutCliente = true;
+				break;
+			}
+			else {
+				cerr << "Error al intentar escuchar al cliente" << endl;
+				desconectado = true;
+				break;
+			}
+		}
+
+		// Si no hubo TIMEOUT del cliente
+		if (!timeoutCliente || !desconectado) {
+			// Mostrar la peticion recibida
+			peticion.assign(buf);
+			cout << "Mensaje recibido: " << peticion << endl;
+
+			// Procesar la petición
+			respuesta = "hayQueProcesarEsto";
+
+			//Enviar respuesta
+			string comando = peticion.substr(0, peticion.find(';'));
+			if (comando == "cerrarSesion")
+				desconectado = true;
+			else
+				enviarMensaje(respuesta, clientSocket);
+		}
+		
 	}
 }
