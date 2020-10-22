@@ -8,6 +8,7 @@ using namespace std;
 
 // Declaraciones
 void altaServicio(SOCKET& sock);
+void cerrarSesion();
 void gestionPasaje(SOCKET& sock);
 void verRegistro(SOCKET& sock);
 void menu(SOCKET& sock);
@@ -90,6 +91,7 @@ int main()
 				
 				respuesta = recibirMensaje(sock);
 				cout << "Respuesta del login: " << respuesta << endl;
+				menu(sock);
 			}
 
 			if (respuesta == "excesoDeIntentos") {
@@ -122,7 +124,28 @@ int main()
 }
 
 // Implementaciones
-void altaServicio(SOCKET &sock) {
+void altaServicio(SOCKET& sock) {
+	string origen,fecha,turno,alta;
+
+	system("cls");
+	cout << "ALTA DE SERVICIO" << endl;
+	cout << "Ingrese origen: "; cin >> origen; 
+	cout << "ingrese Fecha: "; cin >> fecha;
+	cout << "ingrese Turno: "; cin >> turno;
+	alta ="1;" +origen + ";" + fecha + ";" + turno;
+
+	if (enviarMensaje(alta, sock)!=1){
+		cout << "Servicio Generado: "+alta;
+	}
+	else {
+		cout << "Error al enviar mensaje";
+	}
+	
+	system("pause");
+
+}
+
+void gestionPasaje() {
 	system("cls");
 	cout << "Alta de servicios" << endl << endl;
 	system("pause");
@@ -142,6 +165,7 @@ void verRegistro(SOCKET& sock) {
 	system("pause");
 
 }
+
 
 void menu(SOCKET &sock) {
 	int opcion;

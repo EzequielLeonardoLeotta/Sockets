@@ -14,13 +14,14 @@ using namespace std;
 bool validarLogin(string &mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
+void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 
 int main()
 {
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
-
+	altaServicio("cordoba;12/3/2020;mañana");
 	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Iniciar Winsock
@@ -88,6 +89,9 @@ int main()
 				ntohs(client.sin_port) << endl;
 		}
 
+
+
+
 		// Cerrar socket de escucha porque se conectó un cliente
 		closesocket(listening);
 
@@ -98,7 +102,48 @@ int main()
 		
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
+		//altaServicio("cordoba;12/05/2020;manana");
+		//// Atender peticiones del cliente hasta que se desconecte
+		//char buf[4096];
+		//string respuesta;
+		//bool desconectado = false;
+		//
+		//// Recibir hasta que el cliente corte la conexion
+		//do {
+		//	iResult = recv(clientSocket, buf, 4096, 0);
+		//	if (iResult == SOCKET_ERROR) {
+		//		if (WSAGetLastError() == 10060) {
+		//			cerr << "Cliente desconectado (TIMEOUT)" << endl;
+		//			timeoutCliente = true;
+		//			break;
+		//		}
+		//		else {
+		//			cerr << "Error al intentar escuchar al cliente" << endl << endl;
+		//			timeoutCliente = true;
+		//			break;
+		//		}
+		//	}
+		//	if (iResult > 0) {
+		//		string mensaje = "";
+		//		mensaje.assign(buf);
+		//		cout << "Mensaje recibido: " << mensaje << endl;
 
+		//		// Procesar la peticion y preparar la respuesta
+
+		//		// Enviar respuesta al cliente
+		//		int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
+		//		if (iResult == SOCKET_ERROR) {
+		//			cout << "Error al enviar la respuesta" << endl;
+		//		} else 
+		//			cout << "Respuesta enviada: " << respuesta << endl << endl;
+		//	}
+		//	else if (iResult == 0)
+		//		desconectado = true;
+		//	else {
+		//		cout << "Error in recv()" << endl;
+		//		desconectado = true;
+		//	}
+		//} while (iResult > 0  && !timeoutCliente && !desconectado);
 		// Atender peticiones del cliente hasta que se desconecte
 		atenderPeticiones(clientSocket);
 		
@@ -121,6 +166,26 @@ int main()
 }
 
 // Implementaciones
+void leerServicios() {
+
+}
+
+
+void altaServicio(string mensaje) {
+	//ejemplo altaServicio("cordoba");
+
+	// si inserto un string largo explota ejemplo  string prueba = "cordoba;12/05/2020;manana";
+		//string prueba1 = "cordoba;12/05/2020;manana";
+		//string prueba2 = "MardelPlata;12/05/2020;tarde";
+		//string prueba3 = "Salta;12/05/2020;noche";
+		fstream archi("infoServicios.bin", ios::binary | ios::out | ios::app);
+			//archi.write((char*)&prueba1, sizeof(string));
+			//archi.write((char*)&prueba2, sizeof(string));
+	archi.write((char*)&mensaje, sizeof(string));
+
+	archi.close();
+	
+}
 
 bool validarLogin(string &mensaje) {
 	// Sacar del mensaje sus 3 valores
@@ -212,6 +277,7 @@ void login(SOCKET &clientSocket) {
 				mensaje = "excesoDeIntentos";
 			}
 		}
+
 
 		//Enviar respuesta
 		if (!timeoutCliente) {
