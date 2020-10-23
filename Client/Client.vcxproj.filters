@@ -19,9 +19,4 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="infoServicios.bin">
-      <Filter>Archivos de origen</Filter>
-    </None>
-  </ItemGroup>
 </Project>

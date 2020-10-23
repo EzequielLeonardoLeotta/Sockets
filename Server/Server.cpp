@@ -102,48 +102,7 @@ int main()
 		
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
-		//altaServicio("cordoba;12/05/2020;manana");
-		//// Atender peticiones del cliente hasta que se desconecte
-		//char buf[4096];
-		//string respuesta;
-		//bool desconectado = false;
-		//
-		//// Recibir hasta que el cliente corte la conexion
-		//do {
-		//	iResult = recv(clientSocket, buf, 4096, 0);
-		//	if (iResult == SOCKET_ERROR) {
-		//		if (WSAGetLastError() == 10060) {
-		//			cerr << "Cliente desconectado (TIMEOUT)" << endl;
-		//			timeoutCliente = true;
-		//			break;
-		//		}
-		//		else {
-		//			cerr << "Error al intentar escuchar al cliente" << endl << endl;
-		//			timeoutCliente = true;
-		//			break;
-		//		}
-		//	}
-		//	if (iResult > 0) {
-		//		string mensaje = "";
-		//		mensaje.assign(buf);
-		//		cout << "Mensaje recibido: " << mensaje << endl;
-
-		//		// Procesar la peticion y preparar la respuesta
-
-		//		// Enviar respuesta al cliente
-		//		int iResult = send(clientSocket, respuesta.c_str(), (int)strlen(respuesta.c_str()) + 1, 0);
-		//		if (iResult == SOCKET_ERROR) {
-		//			cout << "Error al enviar la respuesta" << endl;
-		//		} else 
-		//			cout << "Respuesta enviada: " << respuesta << endl << endl;
-		//	}
-		//	else if (iResult == 0)
-		//		desconectado = true;
-		//	else {
-		//		cout << "Error in recv()" << endl;
-		//		desconectado = true;
-		//	}
-		//} while (iResult > 0  && !timeoutCliente && !desconectado);
+		
 		// Atender peticiones del cliente hasta que se desconecte
 		atenderPeticiones(clientSocket);
 		
@@ -316,11 +275,18 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			peticion.assign(buf);
 			cout << "Mensaje recibido: " << peticion << endl;
 
-			// Procesar la petición
-			respuesta = "hayQueProcesarEsto";
-
-			//Enviar respuesta
+			// Procesar la petición dependiendo del tipo de comando que llegó
 			string comando = peticion.substr(0, peticion.find(';'));
+
+			// Prueba, borrar esto
+			if (comando == "altaServicio") {
+				respuesta = "altaServicio";
+			}	
+			else {
+				respuesta = comando;
+			}
+				
+			// Enviar respuesta
 			if (comando == "cerrarSesion")
 				desconectado = true;
 			else
