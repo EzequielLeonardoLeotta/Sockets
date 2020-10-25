@@ -1,11 +1,13 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
 #include <fstream>
 #include <sstream>
-
+#include <ctime>
+#include <vector>
 #pragma comment (lib, "ws2_32.lib")
 
 using namespace std;
@@ -16,18 +18,17 @@ int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
 void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
-
+void serverLog(string mensaje);
 int main()
 {
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
-	altaServicio("cordoba;12/3/2020;mañana");
+	serverLog("Inicio de Servidor");
 	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Iniciar Winsock
 		WSADATA wsData;
 		WORD ver = MAKEWORD(2, 2);
-
 		int iResult = WSAStartup(ver, &wsData);
 		if (iResult != 0)
 		{
@@ -40,13 +41,14 @@ int main()
 		int puerto = 54000;
 
 		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
+
 		if (listening == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket de escucha" << endl;
 			WSACleanup();
 			return 1;
 		}
-
+		serverLog("Se creo socket");
 		// Vincular la direccion ip y el puerto al socket de escucha
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
@@ -62,6 +64,8 @@ int main()
 			break;
 		}
 		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
+		
+		serverLog("Servidor escuchando en puerto: "+ to_string(puerto));
 
 		// Esperar una conexion
 		sockaddr_in client;
@@ -71,9 +75,10 @@ int main()
 		if (clientSocket == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket del cliente" << endl;
+			serverLog("No se pudo crear socket del cliente");
 			break;
 		}
-
+		serverLog("Creacion de socket cliente exitosa");
 		char host[NI_MAXHOST];		// Nombre del equipo remoto
 		char service[NI_MAXSERV];	// Puerto del equipo remoto
 
@@ -129,6 +134,32 @@ void leerServicios() {
 
 }
 
+void serverLog(string mensaje) {
+	fstream file;
+	cout << mensaje.c_str();
+	int dia, mes, ano, hora , minutos,segundos;
+	time_t t = time(NULL);
+	struct tm  today = *localtime(&t);
+	mes = today.tm_mon;
+	dia = today.tm_mday;
+	ano = today.tm_year + 1900;
+	hora = today.tm_hour;
+	minutos = today.tm_min;
+	segundos = today.tm_sec;
+
+	string FechaHora = to_string(dia)  + "/" + to_string(mes)  + "/" + to_string(ano)+"__"+to_string(hora)+":"+to_string(minutos)+":"+to_string(segundos);
+
+	file.open("server.log", ios::app | ios::out);
+	
+		if (file.fail()) {
+			cout << "no se pudo abrir el archivo";
+			exit(1);
+		}
+		
+			file << "------------------------------------------------" << endl;
+			file << FechaHora<<"--->"<<mensaje.c_str() << endl;
+				
+	}
 
 void altaServicio(string mensaje) {
 	//ejemplo altaServicio("cordoba");
