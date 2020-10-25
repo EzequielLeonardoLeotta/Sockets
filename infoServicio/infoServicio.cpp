@@ -1,43 +1,22 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
-#include <iterator>
-
-typedef unsigned char BYTE;
 
 using namespace std;
 
 // Declaraciones
-vector<BYTE> readFile(const char* filename);
 void escribirAlArchivo(string texto);
-void leerDelArchivo();
+string leerDelArchivo();
 
 int main() {
 
-    //escribirAlArchivo("Mar del plata;Tarde;21122020");
-    leerDelArchivo();
+    escribirAlArchivo("Mardelplata;Tarde;21122020");
+    cout << leerDelArchivo();
 
     return 0;
 }
 
 // Implementaciones
-vector<BYTE> readFile(const char* filename) {
-    // Abro el archivo:
-    streampos fileSize;
-    ifstream file(filename, std::ios::binary);
-
-    // consigue su tamaño
-    file.seekg(0, std::ios::end);
-    fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    // Lee la data del archivo:
-    vector<BYTE> fileData(fileSize);
-    file.read((char*)&fileData[0], fileSize);
-    return fileData;
-}
-
 void escribirAlArchivo(string texto){
     char buffer[100];
     strcpy_s(buffer, texto.c_str());
@@ -56,8 +35,9 @@ void escribirAlArchivo(string texto){
     }
 }
 
-void leerDelArchivo() {
+string leerDelArchivo() {
     char buffer[100];
+    string respuesta = "";
 
     fstream f;
 
@@ -72,9 +52,11 @@ void leerDelArchivo() {
         exit(2);
     }
 
-    int largo = strnlen_s(buffer, sizeof(buffer));
+    const size_t largo = strnlen_s(buffer, sizeof(buffer));
 
     for (int i = 0; i < largo; i++) {
-        cout << buffer[i];
+        respuesta = respuesta + buffer[i];
     }
+
+    return respuesta;
 }
