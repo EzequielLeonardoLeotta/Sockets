@@ -3,16 +3,26 @@
 #include <string>
 #include <vector>
 #include <iterator>
-typedef unsigned char BYTE;
 
+typedef unsigned char BYTE;
 
 using namespace std;
 
+// Declaraciones
+vector<BYTE> readFile(const char* filename);
+void escribirAlArchivo(string texto);
+void leerDelArchivo();
 
-vector<BYTE> readFile(const char* filename)
+int main() {
 
+    //escribirAlArchivo("Mar del plata;Tarde;21122020");
+    leerDelArchivo();
 
-{
+    return 0;
+}
+
+// Implementaciones
+vector<BYTE> readFile(const char* filename) {
     // Abro el archivo:
     streampos fileSize;
     ifstream file(filename, std::ios::binary);
@@ -27,16 +37,44 @@ vector<BYTE> readFile(const char* filename)
     file.read((char*)&fileData[0], fileSize);
     return fileData;
 }
-int main()
-{
-    char buffer[100];
-         
-    vector<BYTE> fileData = readFile("../Server/infoServicios.bin");
-    
-    //Array con la data del archivo 
-    for (int i = 0; i < fileData.size();i++) {   
-        cout << fileData[i];
-    }
-    return 0;
 
+void escribirAlArchivo(string texto){
+    char buffer[100];
+    strcpy_s(buffer, texto.c_str());
+
+    fstream f;
+
+    f.open("servicios.bin", ios::out | ios::binary);
+
+    if (f) {
+        f.write(buffer, sizeof(buffer));
+        f.close();
+    }
+    else {
+        cout << "Error al abrir el archivo para escribir" << endl;
+        exit(1);
+    }
+}
+
+void leerDelArchivo() {
+    char buffer[100];
+
+    fstream f;
+
+    f.open("servicios.bin", ios::in | ios::binary);
+
+    if (f) {
+        f.read(buffer, sizeof(buffer));
+        f.close();
+    }
+    else {
+        cout << "Error al abrir el archivo para leer" << endl;
+        exit(2);
+    }
+
+    int largo = strnlen_s(buffer, sizeof(buffer));
+
+    for (int i = 0; i < largo; i++) {
+        cout << buffer[i];
+    }
 }
