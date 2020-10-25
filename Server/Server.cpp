@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <ctime>
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -16,18 +17,17 @@ int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
 void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
-
+void serverLog(string mensaje);
 int main()
 {
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
-	altaServicio("cordoba;12/3/2020;mañana");
+	serverLog("Inicio de Servidor");
 	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Iniciar Winsock
 		WSADATA wsData;
 		WORD ver = MAKEWORD(2, 2);
-
 		int iResult = WSAStartup(ver, &wsData);
 		if (iResult != 0)
 		{
@@ -40,13 +40,14 @@ int main()
 		int puerto = 54000;
 
 		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
+
 		if (listening == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket de escucha" << endl;
 			WSACleanup();
 			return 1;
 		}
-
+		serverLog("Se creo socket");
 		// Vincular la direccion ip y el puerto al socket de escucha
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
@@ -62,6 +63,7 @@ int main()
 			break;
 		}
 		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
+		serverLog("Servidor escuchando en puerto: "+puerto);
 
 		// Esperar una conexion
 		sockaddr_in client;
@@ -71,9 +73,10 @@ int main()
 		if (clientSocket == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket del cliente" << endl;
+			serverLog("No se pudo crear socket del cliente");
 			break;
 		}
-
+		serverLog("Creacion de socket cliente exitosa");
 		char host[NI_MAXHOST];		// Nombre del equipo remoto
 		char service[NI_MAXSERV];	// Puerto del equipo remoto
 
@@ -129,6 +132,22 @@ void leerServicios() {
 
 }
 
+void serverLog(string mensaje) {
+	ofstream file;
+	cout << mensaje.c_str();
+	file.open("server.log",ios::out);
+	
+		
+		if (file.fail()) {
+			cout << "no se pudo abrir el archivo";
+			exit(1);
+		}
+		if (file.is_open()){
+			file << "------------------------------------------------" << endl;
+			file << mensaje.c_str() << endl;
+		}
+		
+	}
 
 void altaServicio(string mensaje) {
 	//ejemplo altaServicio("cordoba");
