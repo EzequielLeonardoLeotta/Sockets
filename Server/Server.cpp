@@ -1,4 +1,5 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
 #include <WS2tcpip.h>
@@ -6,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-
+#include <vector>
 #pragma comment (lib, "ws2_32.lib")
 
 using namespace std;
@@ -63,7 +64,8 @@ int main()
 			break;
 		}
 		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
-		serverLog("Servidor escuchando en puerto: "+puerto);
+		
+		serverLog("Servidor escuchando en puerto: "+ to_string(puerto));
 
 		// Esperar una conexion
 		sockaddr_in client;
@@ -133,20 +135,30 @@ void leerServicios() {
 }
 
 void serverLog(string mensaje) {
-	ofstream file;
+	fstream file;
 	cout << mensaje.c_str();
-	file.open("server.log",ios::out);
+	int dia, mes, ano, hora , minutos,segundos;
+	time_t t = time(NULL);
+	struct tm  today = *localtime(&t);
+	mes = today.tm_mon;
+	dia = today.tm_mday;
+	ano = today.tm_year + 1900;
+	hora = today.tm_hour;
+	minutos = today.tm_min;
+	segundos = today.tm_sec;
+
+	string FechaHora = to_string(dia)  + "/" + to_string(mes)  + "/" + to_string(ano)+"__"+to_string(hora)+":"+to_string(minutos)+":"+to_string(segundos);
+
+	file.open("server.log", ios::app | ios::out);
 	
-		
 		if (file.fail()) {
 			cout << "no se pudo abrir el archivo";
 			exit(1);
 		}
-		if (file.is_open()){
-			file << "------------------------------------------------" << endl;
-			file << mensaje.c_str() << endl;
-		}
 		
+			file << "------------------------------------------------" << endl;
+			file << FechaHora<<"--->"<<mensaje.c_str() << endl;
+				
 	}
 
 void altaServicio(string mensaje) {
