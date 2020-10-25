@@ -6,27 +6,25 @@ using namespace std;
 
 // Declaraciones
 void escribirAlArchivo(string texto);
-string leerDelArchivo();
+void leerDelArchivo();
 
 int main() {
-
-    escribirAlArchivo("Mardelplata;Tarde;21122020");
-    cout << leerDelArchivo();
+    //escribirAlArchivo("BuenosAires;Tarde;21122020;");
+    leerDelArchivo();
 
     return 0;
 }
 
 // Implementaciones
-void escribirAlArchivo(string texto){
-    char buffer[100];
-    strcpy_s(buffer, texto.c_str());
-
+void escribirAlArchivo(string texto) {
     fstream f;
-
-    f.open("servicios.bin", ios::out | ios::binary);
+    f.open("servicios.bin", ios::app | ios::binary);
 
     if (f) {
-        f.write(buffer, sizeof(buffer));
+        size_t largo = strnlen(texto.c_str(), sizeof(texto));
+        for (int i = 0; i < largo; i++) {
+            f.put(texto[i]);
+        }
         f.close();
     }
     else {
@@ -35,28 +33,30 @@ void escribirAlArchivo(string texto){
     }
 }
 
-string leerDelArchivo() {
-    char buffer[100];
-    string respuesta = "";
+void leerDelArchivo() {
+    ifstream archivo("servicios.bin", ifstream::binary);
+    if (archivo) {
+        // get length of file:
+        archivo.seekg(0, archivo.end);
+        streamoff length = archivo.tellg();
+        archivo.seekg(0, archivo.beg);
 
-    fstream f;
+        char* buffer = new char[length]; // buffer = toda la info del archivo
 
-    f.open("servicios.bin", ios::in | ios::binary);
+        // read data as a block:
+        archivo.read(buffer, length);
 
-    if (f) {
-        f.read(buffer, sizeof(buffer));
-        f.close();
+        if (archivo) {
+            // Procesar buffer
+            for (int i = 0; i < length; i++)
+                cout << buffer[i];
+        }
+        else
+            cout << "Error al leer el archivo para leer" << endl;
+        archivo.close();
+
+        // ...buffer contains the entire file...
+        delete[] buffer;
     }
-    else {
-        cout << "Error al abrir el archivo para leer" << endl;
-        exit(2);
-    }
 
-    const size_t largo = strnlen_s(buffer, sizeof(buffer));
-
-    for (int i = 0; i < largo; i++) {
-        respuesta = respuesta + buffer[i];
-    }
-
-    return respuesta;
 }
