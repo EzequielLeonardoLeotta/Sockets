@@ -17,7 +17,6 @@ void verRegistro(SOCKET& sock);
 void menu(SOCKET& sock);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 string recibirMensaje(SOCKET& sock);
-void archivarLog(string mensaje);
 
 // Variables globales
 string usuario;
@@ -131,18 +130,19 @@ int main()
 
 // Implementaciones
 void altaServicio(SOCKET& sock) {
-	string origen,fecha,turno,alta;
+	string origen,fecha,turno,alta,log;
 
 	system("cls");
 	cout << "Alta de servicio" << endl;
 	cout << "Ingrese origen: "; cin >> origen; 
 	cout << "ingrese Fecha: "; cin >> fecha;
 	cout << "ingrese Turno: "; cin >> turno;
-	alta ="altaServicio;" +origen + ";" + fecha + ";" + turno;
+	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno;
+	log = "log;" + usuario + alta;
 
 	if (enviarMensaje(alta, sock)!=1){
 		cout << "Servicio Generado: "+alta;
-		archivarLog("Servicio Generado: " + alta);
+		enviarMensaje(log, sock);
 	}
 	else {
 		cout << "Error al enviar mensaje";
@@ -236,32 +236,4 @@ string recibirMensaje(SOCKET& sock) {
 	respuesta.assign(bufer);
 
 	return respuesta;
-}
-
-void archivarLog(string mensaje)
-{
-	fstream archivo("../Server/" + usuario + ".txt", ios::app | ios::out);
-
-	if (archivo.is_open())
-	{
-		int dia, mes, ano, hora, minutos, segundos;
-		time_t t = time(NULL);
-		struct tm  today = *localtime(&t);
-		mes = today.tm_mon;
-		dia = today.tm_mday;
-		ano = today.tm_year + 1900;
-		hora = today.tm_hour;
-		minutos = today.tm_min;
-		segundos = today.tm_sec;
-
-		string fechaHora = to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
-
-		archivo << fechaHora + " " + mensaje;
-		archivo.close();
-	}
-	else
-	{
-		cout << "Error al abrir el archivo";
-		EXIT_FAILURE;
-	}
 }

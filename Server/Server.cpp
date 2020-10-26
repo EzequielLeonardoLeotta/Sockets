@@ -19,6 +19,8 @@ void login(SOCKET& clientSocket);
 void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
+void archivarLogCliente(string mensaje);
+
 int main()
 {
 	//Caracteres en español
@@ -307,15 +309,16 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			cout << "Mensaje recibido: " << peticion << endl;
 
 			// Procesar la petición dependiendo del tipo de comando que llegó
-			string comando = peticion.substr(0, peticion.find(';'));
+			size_t delimitador = peticion.find(';');
+			string comando = peticion.substr(0, delimitador);
+			// Peticion sin comando 
+			string mensaje = peticion.substr(delimitador).replace(0, 1, "");
 
-			// Prueba, borrar esto
-			if (comando == "altaServicio") {
-				respuesta = "altaServicio";
-			}	
-			else {
-				respuesta = comando;
-			}
+			// Switch en base al comando recibido
+			if (comando == "altaServicio")
+				altaServicio(mensaje);
+			else if (comando == "log")
+				archivarLogCliente(mensaje);
 				
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
@@ -325,4 +328,32 @@ void atenderPeticiones(SOCKET &clientSocket) {
 		}
 		
 	}
+}
+
+void archivarLogCliente(string mensaje)
+{
+	//fstream archivo("../Server/" + usuario + ".txt", ios::app | ios::out);
+
+	//if (archivo.is_open())
+	//{
+	//	int dia, mes, ano, hora, minutos, segundos;
+	//	time_t t = time(NULL);
+	//	struct tm  today = *localtime(&t);
+	//	mes = today.tm_mon;
+	//	dia = today.tm_mday;
+	//	ano = today.tm_year + 1900;
+	//	hora = today.tm_hour;
+	//	minutos = today.tm_min;
+	//	segundos = today.tm_sec;
+
+	//	string fechaHora = to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+
+	//	archivo << fechaHora + " " + mensaje;
+	//	archivo.close();
+	//}
+	//else
+	//{
+	//	cout << "Error al abrir el archivo";
+	//	EXIT_FAILURE;
+	//}
 }
