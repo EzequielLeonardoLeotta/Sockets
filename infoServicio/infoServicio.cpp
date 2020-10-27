@@ -18,7 +18,7 @@ int main() {
 // Implementaciones
 void escribirAlArchivo(string texto) {
     fstream f;
-    f.open("servicios.bin", ios::app | ios::binary);
+    f.open("../Server/infoServicios.bin", ios::app | ios::binary);
 
     if (f) {
         size_t largo = strnlen(texto.c_str(), sizeof(texto));
@@ -34,7 +34,7 @@ void escribirAlArchivo(string texto) {
 }
 
 void leerDelArchivo() {
-    ifstream archivo("servicios.bin", ifstream::binary);
+    ifstream archivo("../Server/infoServicios.bin", ifstream::binary);
     if (archivo) {
         // get length of file:
         archivo.seekg(0, archivo.end);

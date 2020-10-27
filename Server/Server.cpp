@@ -129,21 +129,21 @@ void leerServicios() {
 
 }
 
-
 void altaServicio(string mensaje) {
-	//ejemplo altaServicio("cordoba");
+	fstream f;
+	f.open("infoServicios.bin", ios::app | ios::binary);
 
-	// si inserto un string largo explota ejemplo  string prueba = "cordoba;12/05/2020;manana";
-		//string prueba1 = "cordoba;12/05/2020;manana";
-		//string prueba2 = "MardelPlata;12/05/2020;tarde";
-		//string prueba3 = "Salta;12/05/2020;noche";
-		fstream archi("infoServicios.bin", ios::binary | ios::out | ios::app);
-			//archi.write((char*)&prueba1, sizeof(string));
-			//archi.write((char*)&prueba2, sizeof(string));
-	archi.write((char*)&mensaje, sizeof(string));
-
-	archi.close();
-	
+	if (f) {
+		size_t largo = strnlen(mensaje.c_str(), sizeof(mensaje));
+		for (int i = 0; i < largo; i++) {
+			f.put(mensaje[i]);
+		}
+		f.close();
+	}
+	else {
+		cout << "Error al abrir el archivo para escribir" << endl;
+		exit(1);
+	}
 }
 
 bool validarLogin(string &mensaje) {
