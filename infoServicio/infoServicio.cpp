@@ -1,42 +1,62 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
-#include <iterator>
-typedef unsigned char BYTE;
-
 
 using namespace std;
 
+// Declaraciones
+void escribirAlArchivo(string texto);
+void leerDelArchivo();
 
-vector<BYTE> readFile(const char* filename)
+int main() {
+    //escribirAlArchivo("BuenosAires;Tarde;21122020;");
+    leerDelArchivo();
 
-
-{
-    // Abro el archivo:
-    streampos fileSize;
-    ifstream file(filename, std::ios::binary);
-
-    // consigue su tamaño
-    file.seekg(0, std::ios::end);
-    fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    // Lee la data del archivo:
-    vector<BYTE> fileData(fileSize);
-    file.read((char*)&fileData[0], fileSize);
-    return fileData;
-}
-int main()
-{
-    char buffer[100];
-         
-    vector<BYTE> fileData = readFile("../Server/infoServicios.bin");
-    
-    //Array con la data del archivo 
-    for (int i = 0; i < fileData.size();i++) {   
-        cout << fileData[i];
-    }
     return 0;
+}
+
+// Implementaciones
+void escribirAlArchivo(string texto) {
+    fstream f;
+    f.open("../Server/infoServicios.bin", ios::app | ios::binary);
+
+    if (f) {
+        size_t largo = strnlen(texto.c_str(), sizeof(texto));
+        for (int i = 0; i < largo; i++) {
+            f.put(texto[i]);
+        }
+        f.close();
+    }
+    else {
+        cout << "Error al abrir el archivo para escribir" << endl;
+        exit(1);
+    }
+}
+
+void leerDelArchivo() {
+    ifstream archivo("../Server/infoServicios.bin", ifstream::binary);
+    if (archivo) {
+        // get length of file:
+        archivo.seekg(0, archivo.end);
+        streamoff length = archivo.tellg();
+        archivo.seekg(0, archivo.beg);
+
+        char* buffer = new char[length]; // buffer = toda la info del archivo
+
+        // read data as a block:
+        archivo.read(buffer, length);
+
+        if (archivo) {
+            // Procesar buffer
+            for (int i = 0; i < length; i++)
+                cout << buffer[i];
+        }
+        else
+            cout << "Error al leer el archivo para leer" << endl;
+        archivo.close();
+
+        // ...buffer contains the entire file...
+        delete[] buffer;
+    }
 
 }
