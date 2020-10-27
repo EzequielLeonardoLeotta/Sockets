@@ -5,7 +5,7 @@
 using namespace std;
 
 // Declaraciones
-void escribirAlArchivo(string texto);
+void escribirAlArchivo(string texto); //solo para probar
 void leerDelArchivo();
 
 int main() {
@@ -58,5 +58,4 @@ void leerDelArchivo() {
         // ...buffer contains the entire file...
         delete[] buffer;
     }
-
 }
