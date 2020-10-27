@@ -332,28 +332,32 @@ void atenderPeticiones(SOCKET &clientSocket) {
 
 void archivarLogCliente(string mensaje)
 {
-	//fstream archivo("../Server/" + usuario + ".txt", ios::app | ios::out);
+	size_t delimitador = mensaje.find(';');
+	string usuario = mensaje.substr(0, delimitador);
+	string mensajeSinUsuario = mensaje.substr(delimitador).replace(0, 1, "");
 
-	//if (archivo.is_open())
-	//{
-	//	int dia, mes, ano, hora, minutos, segundos;
-	//	time_t t = time(NULL);
-	//	struct tm  today = *localtime(&t);
-	//	mes = today.tm_mon;
-	//	dia = today.tm_mday;
-	//	ano = today.tm_year + 1900;
-	//	hora = today.tm_hour;
-	//	minutos = today.tm_min;
-	//	segundos = today.tm_sec;
+	fstream archivo(usuario + ".txt", ios::app | ios::out);
 
-	//	string fechaHora = to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+	if (archivo.is_open())
+	{
+		int dia, mes, ano, hora, minutos, segundos;
+		time_t t = time(NULL);
+		struct tm  today = *localtime(&t);
+		mes = today.tm_mon;
+		dia = today.tm_mday;
+		ano = today.tm_year + 1900;
+		hora = today.tm_hour;
+		minutos = today.tm_min;
+		segundos = today.tm_sec;
 
-	//	archivo << fechaHora + " " + mensaje;
-	//	archivo.close();
-	//}
-	//else
-	//{
-	//	cout << "Error al abrir el archivo";
-	//	EXIT_FAILURE;
-	//}
+		string fechaHora = to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+
+		archivo << fechaHora + " " + mensajeSinUsuario + "\n";
+		archivo.close();
+	}
+	else
+	{
+		cout << "Error al abrir el archivo";
+		EXIT_FAILURE;
+	}
 }
