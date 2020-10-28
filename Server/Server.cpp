@@ -21,6 +21,8 @@ void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
 string getFechaHoraActual();
+string getUsuario(string mensaje);
+string getMensajeSinUsuario(string mensaje);
 
 int main()
 {
@@ -151,20 +153,17 @@ void serverLog(string mensaje)
 }
 
 void altaServicio(string mensaje) {
-	size_t delimitador = mensaje.find(';');
-	string usuario = mensaje.substr(0, delimitador);
-	string mensajeSinUsuario = mensaje.substr(delimitador).replace(0, 1, "");
-
 	fstream f;
 	f.open("infoServicios.bin", ios::app | ios::binary);
 	
 	if (f) {
+		string mensajeSinUsuario = getMensajeSinUsuario(mensaje);
 		size_t largo = strnlen(mensajeSinUsuario.c_str(), sizeof(mensajeSinUsuario));
 		for (int i = 0; i < largo; i++) {
 			f.put(mensajeSinUsuario[i]);
 		}
 		f.close();
-		archivarLogCliente(mensaje + "--->AltaServicio");
+		archivarLogCliente(mensaje + " ---> AltaServicio");
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
@@ -254,6 +253,7 @@ void login(SOCKET &clientSocket) {
 		if (validarLogin(respuesta)) {
 			mensaje = "loginOK";
 			logueado = true;
+			//archivarLogCliente();
 		}
 		else {
 			intentos++;
@@ -322,15 +322,11 @@ void atenderPeticiones(SOCKET &clientSocket) {
 
 void archivarLogCliente(string mensaje)
 {
-	size_t delimitador = mensaje.find(';');
-	string usuario = mensaje.substr(0, delimitador);
-	string mensajeSinUsuario = mensaje.substr(delimitador).replace(0, 1, "");
-
-	fstream archivo("Log/Clientes/" + usuario + ".txt", ios::app | ios::out);
+	fstream archivo("Log/Clientes/" + getUsuario(mensaje) + ".txt", ios::app | ios::out);
 
 	if (archivo.is_open())
 	{
-		archivo << getFechaHoraActual() + " " + mensajeSinUsuario + "\n";
+		archivo << getFechaHoraActual() + " " + getMensajeSinUsuario(mensaje) + "\n";
 		archivo << "------------------------------------------------" << endl;
 		archivo.close();
 	}
@@ -354,4 +350,14 @@ string getFechaHoraActual()
 	segundos = today.tm_sec;
 
 	return to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+}
+
+string getUsuario(string mensaje)
+{
+	return mensaje.substr(0, mensaje.find(';'));
+}
+
+string getMensajeSinUsuario(string mensaje)
+{
+	return  mensaje.substr(mensaje.find(";")).replace(0, 1, "");
 }
