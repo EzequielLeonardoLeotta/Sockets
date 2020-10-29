@@ -20,14 +20,16 @@ void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
+bool validarServicio(char* texto);
 string getFechaHoraActual();
 
 //Variables globales
 string usuarioCliente;
 
+
 int main()
 {
-	//Caracteres en español
+	//Caracteres en espaÃ±ol
 	setlocale(LC_ALL, "Spanish");
 	serverLog("Inicio de Servidor");
 	//Bucle infinito de servicio del servidor
@@ -100,7 +102,7 @@ int main()
 				ntohs(client.sin_port) << endl;
 		}
 
-		// Cerrar socket de escucha porque se conectó un cliente
+		// Cerrar socket de escucha porque se conectÃ³ un cliente
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
@@ -108,7 +110,7 @@ int main()
 		bool timeoutCliente = false;
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 		
-		// Enviar pedido de usuario y contraseña
+		// Enviar pedido de usuario y contraseÃ±a
 		login(clientSocket);
 		
 		// Atender peticiones del cliente hasta que se desconecte
@@ -152,23 +154,72 @@ void serverLog(string mensaje)
 	file << "------------------------------------------------" << endl;
 	file << getFechaHoraActual() <<"--->"<<mensaje.c_str() << endl;
 }
+bool validarServicio(char* texto) {
+	ifstream archivo("infoServicios.bin", ifstream::binary);
+	if (archivo) {
+		// get length of file:
+		archivo.seekg(0, archivo.end);
+		streamoff length = archivo.tellg();
+		archivo.seekg(0, archivo.beg);
 
+		char* buffer = new char[length]; // buffer = toda la info del archivo
+		int longitud1 = length;
+		int longitud2 = strlen(texto);
+		// read data as a block:
+		char c;
+		archivo.read(buffer, length);
+		if (archivo) {
+			// Procesar buffer
+			c = texto[0];
+			for (int i = 0; i < length; i++) {
+				if (buffer[i] == c) {
+					if (strncmp(&buffer[i], texto, longitud2) == 0) {
+						return true;
+					}
+				}
+			}
+		}
+		else
+			cout << "Error al leer el archivo para leer" << endl;
+		archivo.close();
+		// ...buffer contains the entire file...
+		delete[] buffer;
+		return false;
+	}
+
+}
 void altaServicio(string mensaje) {
+	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
+	char d[] = "";
+	char *prueba=d;
+	strcpy(prueba, mensaje.c_str());
+	string butacas = "00000000000000000000000000000000000000000000000000000000;";
+	string init = mensaje + butacas;
 	fstream f;
 	f.open("infoServicios.bin", ios::app | ios::binary);
 	
 	if (f) {
-		size_t largo = strnlen(mensaje.c_str(), sizeof(mensaje));
-		for (int i = 0; i < largo; i++) {
-			f.put(mensaje[i]);
+		size_t largo = strnlen(init.c_str(), init.length());
+		
+		bool flag = validarServicio(prueba);
+		if (flag!=true) {
+			for (int i = 0; i < largo; i++) {
+				f.put(init[i]);
+			}
 		}
-		f.close();
+		else {
+			cout << "no se puede dar de alta" << endl;
+			exit(1);
+		}
+	  f.close();
 		archivarLogCliente(mensaje + " - AltaServicio");
+    exit(1);
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
 		exit(1);
 	}
+
 }
 
 bool validarLogin(string &mensaje) {
@@ -259,7 +310,7 @@ void login(SOCKET &clientSocket) {
 		}
 		else {
 			intentos++;
-			// Si llegué a 3 intentos tirar error
+			// Si lleguÃ© a 3 intentos tirar error
 			if (intentos == 3) {
 				mensaje = "excesoDeIntentos";
 			}
@@ -303,7 +354,7 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			peticion.assign(buf);
 			cout << "Mensaje recibido: " << peticion << endl;
 
-			// Procesar la petición dependiendo del tipo de comando que llegó
+			// Procesar la peticiÃ³n dependiendo del tipo de comando que llegÃ³
 			size_t delimitador = peticion.find(';');
 			string comando = peticion.substr(0, delimitador);
 			// Peticion sin comando 

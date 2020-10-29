@@ -23,7 +23,7 @@ string usuario;
 
 int main()
 {	
-	//Caracteres en español
+	//Caracteres en espaÃ±ol
 	setlocale(LC_ALL, "Spanish");
 
 	int puerto=0;
@@ -70,7 +70,7 @@ int main()
 			system("pause");
 		}
 		else {
-			// Si se conectó bien hacer ...
+			// Si se conectÃ³ bien hacer ...
 
 			// Recibir peticion de login del servidor
 			string respuesta;
@@ -84,7 +84,7 @@ int main()
 				// Solicitar datos de login al usuario
 				cout << "Usuario: ";
 				cin >> usuario;
-				cout << "Contraseña: ";
+				cout << "ContraseÃ±a: ";
 				cin >> password;
 
 				mensaje = "login;" + usuario + ";" + password;
@@ -100,10 +100,10 @@ int main()
 			}
 
 			if (respuesta == "excesoDeIntentos") {
-				cout << "Se superó la cantidad máxima de intentos de ingreso" << endl;
+				cout << "Se superÃ³ la cantidad mÃ¡xima de intentos de ingreso" << endl;
 			}
 			else {
-				// Mostrar el menú
+				// Mostrar el menÃº
 				menu(sock);
 			}
 			
@@ -137,8 +137,8 @@ void altaServicio(SOCKET& sock) {
 	cout << "Ingrese origen: "; cin >> origen; 
 	cout << "ingrese Fecha: "; cin >> fecha;
 	cout << "ingrese Turno: "; cin >> turno;
-	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno;
-
+	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno+";";
+	
 	if (enviarMensaje(alta, sock)!=1){
 		cout << "Servicio Generado: "+alta;
 	}
@@ -179,12 +179,12 @@ void menu(SOCKET &sock) {
 		opcion = 0;
 		while (opcion < 1 || opcion>4) {
 			system("cls");
-			cout << "Menú principal" << endl << endl
+			cout << "MenÃº principal" << endl << endl
 				<< "1: Alta servicio" << endl
 				<< "2: Gestionar pasajes" << endl
 				<< "3: Ver registro de actividades" << endl
-				<< "4: Cerrar sesión" << endl << endl
-				<< "Elija una opción: ";
+				<< "4: Cerrar sesiÃ³n" << endl << endl
+				<< "Elija una opciÃ³n: ";
 			cin >> opcion;
 		}
 
@@ -199,7 +199,7 @@ void menu(SOCKET &sock) {
 			verRegistro(sock);
 			break;
 		case 4:
-			// Salir del menú para volver a la conexión al servidor
+			// Salir del menÃº para volver a la conexiÃ³n al servidor
 			conectado = false;
 			break;
 		default:
