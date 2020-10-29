@@ -21,8 +21,9 @@ void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
 string getFechaHoraActual();
-string getUsuario(string mensaje);
-string getMensajeSinUsuario(string mensaje);
+
+//Variables globales
+string usuarioCliente;
 
 int main()
 {
@@ -157,13 +158,12 @@ void altaServicio(string mensaje) {
 	f.open("infoServicios.bin", ios::app | ios::binary);
 	
 	if (f) {
-		string mensajeSinUsuario = getMensajeSinUsuario(mensaje);
-		size_t largo = strnlen(mensajeSinUsuario.c_str(), sizeof(mensajeSinUsuario));
+		size_t largo = strnlen(mensaje.c_str(), sizeof(mensaje));
 		for (int i = 0; i < largo; i++) {
-			f.put(mensajeSinUsuario[i]);
+			f.put(mensaje[i]);
 		}
 		f.close();
-		archivarLogCliente(mensaje + " ---> AltaServicio");
+		archivarLogCliente(mensaje + " - AltaServicio");
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
@@ -174,7 +174,7 @@ void altaServicio(string mensaje) {
 bool validarLogin(string &mensaje) {
 	// Sacar del mensaje sus 3 valores
 	char delimitador = ';';
-	string comando, usuarioCliente, passCliente;
+	string comando, usuario, passCliente;
 	istringstream input;
 	input.str(mensaje);
 	getline(input, comando, delimitador);
@@ -183,7 +183,7 @@ bool validarLogin(string &mensaje) {
 
 	// Leer archivo y comparar valores
 	bool encontrado=false;
-	string usuario, password, respuesta;
+	string password, respuesta;
 	ifstream archivo;
 	archivo.open("credenciales.txt", ios::in);
 	if (archivo.fail()) {
@@ -194,6 +194,9 @@ bool validarLogin(string &mensaje) {
 		while (getline(archivo, usuario, delimitador) && getline(archivo, password) && !encontrado) {
 			if (usuario == usuarioCliente && password == passCliente) {
 				encontrado = true;
+				archivarLogCliente("=================================");
+				archivarLogCliente("          Inicia sesion          ");
+				archivarLogCliente("=================================");
 			}
 		}
 	}
@@ -253,7 +256,6 @@ void login(SOCKET &clientSocket) {
 		if (validarLogin(respuesta)) {
 			mensaje = "loginOK";
 			logueado = true;
-			//archivarLogCliente();
 		}
 		else {
 			intentos++;
@@ -313,7 +315,10 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
+			{
 				desconectado = true;
+				archivarLogCliente("Cierra sesion\n");
+			}
 			else
 				enviarMensaje(respuesta, clientSocket);
 		}
@@ -322,12 +327,11 @@ void atenderPeticiones(SOCKET &clientSocket) {
 
 void archivarLogCliente(string mensaje)
 {
-	fstream archivo("Log/Clientes/" + getUsuario(mensaje) + ".txt", ios::app | ios::out);
+	fstream archivo("Log/Clientes/" + usuarioCliente + ".txt", ios::app | ios::out);
 
 	if (archivo.is_open())
 	{
-		archivo << getFechaHoraActual() + " " + getMensajeSinUsuario(mensaje) + "\n";
-		archivo << "------------------------------------------------" << endl;
+		archivo << getFechaHoraActual() + " " + mensaje + "\n";
 		archivo.close();
 	}
 	else
@@ -350,14 +354,4 @@ string getFechaHoraActual()
 	segundos = today.tm_sec;
 
 	return to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
-}
-
-string getUsuario(string mensaje)
-{
-	return mensaje.substr(0, mensaje.find(';'));
-}
-
-string getMensajeSinUsuario(string mensaje)
-{
-	return  mensaje.substr(mensaje.find(";")).replace(0, 1, "");
 }

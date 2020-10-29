@@ -137,7 +137,7 @@ void altaServicio(SOCKET& sock) {
 	cout << "Ingrese origen: "; cin >> origen; 
 	cout << "ingrese Fecha: "; cin >> fecha;
 	cout << "ingrese Turno: "; cin >> turno;
-	alta = "altaServicio;" + usuario + ";" + origen + ";" + fecha + ";" + turno;
+	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno;
 
 	if (enviarMensaje(alta, sock)!=1){
 		cout << "Servicio Generado: "+alta;
