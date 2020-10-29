@@ -13,7 +13,7 @@
 using namespace std;
 
 //Declaraciones
-bool validarLogin(string &mensaje);
+bool validarLogin(string& mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
 void altaServicio(string mensaje);
@@ -62,7 +62,7 @@ int main()
 		hint.sin_family = AF_INET;
 		hint.sin_port = htons(puerto);
 		hint.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
-		bind(listening, (sockaddr*)&hint, sizeof(hint));
+		bind(listening, (sockaddr*)& hint, sizeof(hint));
 
 		// Setear el socket para recibir conexiones
 		iResult = listen(listening, SOMAXCONN);
@@ -72,14 +72,14 @@ int main()
 			break;
 		}
 		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
-		
-		serverLog("Servidor escuchando en puerto: "+ to_string(puerto));
+
+		serverLog("Servidor escuchando en puerto: " + to_string(puerto));
 
 		// Esperar una conexion
 		sockaddr_in client;
 		int clientSize = sizeof(client);
 
-		SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+		SOCKET clientSocket = accept(listening, (sockaddr*)& client, &clientSize);
 		if (clientSocket == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket del cliente" << endl;
@@ -93,7 +93,7 @@ int main()
 		ZeroMemory(host, NI_MAXHOST);
 		ZeroMemory(service, NI_MAXSERV);
 
-		if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0) {
+		if (getnameinfo((sockaddr*)& client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0) {
 			cout << host << " conectado en puerto " << service << endl;
 		}
 		else {
@@ -108,14 +108,14 @@ int main()
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
 		int timeout = 120000;  // Tiempo de inactividad maximo en milisegundos 
 		bool timeoutCliente = false;
-		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
-		
+		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)& timeout, sizeof(timeout));
+
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
-		
+
 		// Atender peticiones del cliente hasta que se desconecte
 		atenderPeticiones(clientSocket);
-		
+
 		cout << "--------------------------------------------------" << endl << endl;
 
 		// Apagar el socket antes de cerrarlo
@@ -139,20 +139,20 @@ void leerServicios() {
 
 }
 
-void serverLog(string mensaje) 
+void serverLog(string mensaje)
 {
 	fstream file;
 	cout << mensaje.c_str();
 
 	file.open("Log/server.log", ios::app | ios::out);
-	
+
 	if (file.fail()) {
 		cout << "no se pudo abrir el archivo";
 		exit(1);
 	}
-		
+
 	file << "------------------------------------------------" << endl;
-	file << getFechaHoraActual() <<"--->"<<mensaje.c_str() << endl;
+	file << getFechaHoraActual() << "--->" << mensaje.c_str() << endl;
 }
 bool validarServicio(char* texto) {
 	ifstream archivo("infoServicios.bin", ifstream::binary);
@@ -191,18 +191,18 @@ bool validarServicio(char* texto) {
 void altaServicio(string mensaje) {
 	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
 	char d[] = "";
-	char *prueba=d;
+	char* prueba = d;
 	strcpy(prueba, mensaje.c_str());
 	string butacas = "00000000000000000000000000000000000000000000000000000000;";
 	string init = mensaje + butacas;
 	fstream f;
 	f.open("infoServicios.bin", ios::app | ios::binary);
-	
+
 	if (f) {
 		size_t largo = strnlen(init.c_str(), init.length());
-		
+
 		bool flag = validarServicio(prueba);
-		if (flag!=true) {
+		if (flag != true) {
 			for (int i = 0; i < largo; i++) {
 				f.put(init[i]);
 			}
@@ -211,9 +211,9 @@ void altaServicio(string mensaje) {
 			cout << "no se puede dar de alta" << endl;
 			exit(1);
 		}
-	  f.close();
+		f.close();
 		archivarLogCliente(mensaje + " - AltaServicio");
-    exit(1);
+		exit(1);
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
@@ -222,7 +222,7 @@ void altaServicio(string mensaje) {
 
 }
 
-bool validarLogin(string &mensaje) {
+bool validarLogin(string& mensaje) {
 	// Sacar del mensaje sus 3 valores
 	char delimitador = ';';
 	string comando, usuario, passCliente;
@@ -233,7 +233,7 @@ bool validarLogin(string &mensaje) {
 	getline(input, passCliente, delimitador);
 
 	// Leer archivo y comparar valores
-	bool encontrado=false;
+	bool encontrado = false;
 	string password, respuesta;
 	ifstream archivo;
 	archivo.open("credenciales.txt", ios::in);
@@ -251,7 +251,7 @@ bool validarLogin(string &mensaje) {
 			}
 		}
 	}
-	archivo.close();	
+	archivo.close();
 
 	return encontrado;
 }
@@ -271,14 +271,14 @@ int enviarMensaje(string& mensaje, SOCKET& sock) {
 	return iResult;
 }
 
-void login(SOCKET &clientSocket) {
+void login(SOCKET& clientSocket) {
 	bool logueado = false;
 	bool timeoutCliente = false;
 	string mensaje;
 	int resultado;
 	char buf[4096];
 	string respuesta;
-	int intentos=0;
+	int intentos = 0;
 
 	// Enviar pedido de login al cliente
 	mensaje = "login";
@@ -302,7 +302,7 @@ void login(SOCKET &clientSocket) {
 			respuesta.assign(buf);
 			cout << "Mensaje recibido: " << respuesta << endl;
 		}
-	
+
 		// Validar el login
 		if (validarLogin(respuesta)) {
 			mensaje = "loginOK";
@@ -324,7 +324,7 @@ void login(SOCKET &clientSocket) {
 	}
 }
 
-void atenderPeticiones(SOCKET &clientSocket) {
+void atenderPeticiones(SOCKET& clientSocket) {
 	char buf[4096];
 	string peticion;
 	bool timeoutCliente = false;
@@ -333,7 +333,7 @@ void atenderPeticiones(SOCKET &clientSocket) {
 	string respuesta;
 
 	// Recibir hasta que el cliente corte la conexion
-	while (!desconectado && !timeoutCliente){
+	while (!desconectado && !timeoutCliente) {
 		iResult = recv(clientSocket, buf, 4096, 0);
 		if (iResult == SOCKET_ERROR) {
 			if (WSAGetLastError() == 10060) {
@@ -363,7 +363,7 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			// Switch en base al comando recibido
 			if (comando == "altaServicio")
 				altaServicio(mensaje);
-			
+
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
 			{

@@ -22,18 +22,18 @@ string recibirMensaje(SOCKET& sock);
 string usuario;
 
 int main()
-{	
+{
 	//Caracteres en español
 	setlocale(LC_ALL, "Spanish");
 
-	int puerto=0;
-	string ip="";
+	int puerto = 0;
+	string ip = "";
 
 	// Pedir IP y puerto. Intentar conexion a esos datos
 	while (true) {
 		system("cls");
 		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl << endl;
-		cout << "Direccion IP: "; 
+		cout << "Direccion IP: ";
 		cin >> ip;
 		cout << "Puerto: ";
 		cin >> puerto;
@@ -64,8 +64,8 @@ int main()
 		inet_pton(AF_INET, ip.c_str(), &hint.sin_addr);
 
 		// Conectar al servidor
-		int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
-		if (connResult == SOCKET_ERROR){
+		int connResult = connect(sock, (sockaddr*)& hint, sizeof(hint));
+		if (connResult == SOCKET_ERROR) {
 			cerr << endl << "No se pudo conectar al servidor" << endl << endl;
 			system("pause");
 		}
@@ -77,10 +77,10 @@ int main()
 			string mensaje;
 			string password;
 			respuesta = recibirMensaje(sock);
-			
+
 			while (respuesta == "login") {
 				system("cls");
-				
+
 				// Solicitar datos de login al usuario
 				cout << "Usuario: ";
 				cin >> usuario;
@@ -93,7 +93,7 @@ int main()
 				if (enviarMensaje(mensaje, sock) == 1) {
 					cout << "Error al enviar el mensaje" << endl;
 				}
-				
+
 				respuesta = recibirMensaje(sock);
 				cout << "Respuesta del login: " << respuesta << endl;
 				menu(sock);
@@ -106,14 +106,14 @@ int main()
 				// Mostrar el menú
 				menu(sock);
 			}
-			
+
 			// Enviar peticion de cierre de sesion
 			respuesta = "cerrarSesion;" + usuario;
-			enviarMensaje(respuesta,sock);
+			enviarMensaje(respuesta, sock);
 			cout << endl << "Saliendo del sistema" << endl << endl;
 			system("pause");
 		}
-		
+
 		// Apagar el socket antes de cerrarlo
 		int iResult = shutdown(sock, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
@@ -123,55 +123,51 @@ int main()
 		// Cerrar el socket y limpiar Winsock
 		closesocket(sock);
 		WSACleanup();
-	}	
+	}
 
 	return 0;
 }
 
 // Implementaciones
 void altaServicio(SOCKET& sock) {
-	string origen,fecha,turno,alta,log;
+	string origen, fecha, turno, alta, log;
 
 	system("cls");
 	cout << "Alta de servicio" << endl;
-	cout << "Ingrese origen: "; cin >> origen; 
+	cout << "Ingrese origen: "; cin >> origen;
 	cout << "ingrese Fecha: "; cin >> fecha;
 	cout << "ingrese Turno: "; cin >> turno;
-	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno+";";
-	
-	if (enviarMensaje(alta, sock)!=1){
-		cout << "Servicio Generado: "+alta;
+	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno + ";";
+
+	if (enviarMensaje(alta, sock) != 1) {
+		cout << "Servicio Generado: " + alta;
 	}
 	else {
 		cout << "Error al enviar mensaje";
 	}
-	
-	system("pause");
 
+	system("pause");
 }
 
 void gestionPasaje() {
 	system("cls");
 	cout << "Alta de servicios" << endl << endl;
 	system("pause");
-
 }
 
 void gestionPasaje(SOCKET& sock) {
 	system("cls");
 	cout << "Gestion de pasajes" << endl << endl;
 	system("pause");
-
 }
 
 void verRegistro(SOCKET& sock) {
 	system("cls");
 	cout << "Ver registro de actividades" << endl << endl;
 	system("pause");
-
 }
 
-void menu(SOCKET &sock) {
+void menu(SOCKET& sock) {
 	int opcion;
 	bool conectado = true;
 
@@ -208,8 +204,8 @@ void menu(SOCKET &sock) {
 	}
 }
 
-int enviarMensaje(string &mensaje, SOCKET &sock) {
-	int iResult=0;
+int enviarMensaje(string& mensaje, SOCKET& sock) {
+	int iResult = 0;
 
 	// Intentar enviar mensaje
 	iResult = send(sock, mensaje.c_str(), (int)strlen(mensaje.c_str()) + 1, 0);
