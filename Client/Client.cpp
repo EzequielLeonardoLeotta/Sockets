@@ -135,8 +135,8 @@ void altaServicio(SOCKET& sock) {
 	system("cls");
 	cout << "Alta de servicio" << endl;
 	cout << "Ingrese origen: "; cin >> origen;
-	cout << "ingrese Fecha: "; cin >> fecha;
-	cout << "ingrese Turno: "; cin >> turno;
+	cout << "Ingrese Fecha: "; cin >> fecha;
+	cout << "Ingrese Turno: "; cin >> turno;
 	alta = "altaServicio;" + origen + ";" + fecha + ";" + turno + ";";
 
 	if (enviarMensaje(alta, sock) != 1) {

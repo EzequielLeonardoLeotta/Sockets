@@ -155,6 +155,7 @@ void serverLog(string mensaje)
 	file << "------------------------------------------------" << endl;
 	file << getFechaHoraActual() << "--->" << mensaje.c_str() << endl;
 }
+
 bool validarServicio(char* texto) {
 	ifstream archivo("infoServicios.bin", ifstream::binary);
 	if (archivo) {
@@ -187,8 +188,8 @@ bool validarServicio(char* texto) {
 		delete[] buffer;
 		return false;
 	}
-
 }
+
 void altaServicio(string mensaje) {
 	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
 	char d[] = "";
@@ -220,7 +221,6 @@ void altaServicio(string mensaje) {
 		cout << "Error al abrir el archivo para escribir" << endl;
 		exit(1);
 	}
-
 }
 
 bool validarLogin(string& mensaje) {
