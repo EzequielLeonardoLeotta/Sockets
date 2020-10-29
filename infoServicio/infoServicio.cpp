@@ -5,7 +5,7 @@
 using namespace std;
 
 // Declaraciones
-void escribirAlArchivo(string texto);
+void escribirAlArchivo(string texto); //solo para probar
 void leerDelArchivo();
 bool findTexto(char* texto);
 int main() {

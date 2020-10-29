@@ -21,10 +21,15 @@ void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
 bool validarServicio(char* texto);
+string getFechaHoraActual();
+
+//Variables globales
+string usuarioCliente;
+
 
 int main()
 {
-	//Caracteres en español
+	//Caracteres en espaÃ±ol
 	setlocale(LC_ALL, "Spanish");
 	serverLog("Inicio de Servidor");
 	//Bucle infinito de servicio del servidor
@@ -97,10 +102,7 @@ int main()
 				ntohs(client.sin_port) << endl;
 		}
 
-
-
-
-		// Cerrar socket de escucha porque se conectó un cliente
+		// Cerrar socket de escucha porque se conectÃ³ un cliente
 		closesocket(listening);
 
 		// Configurar el socket para desconexion despues de 2 minutos de inactividad
@@ -108,7 +110,7 @@ int main()
 		bool timeoutCliente = false;
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&timeout, sizeof(timeout));
 		
-		// Enviar pedido de usuario y contraseña
+		// Enviar pedido de usuario y contraseÃ±a
 		login(clientSocket);
 		
 		// Atender peticiones del cliente hasta que se desconecte
@@ -141,28 +143,16 @@ void serverLog(string mensaje)
 {
 	fstream file;
 	cout << mensaje.c_str();
-	int dia, mes, ano, hora , minutos,segundos;
-	time_t t = time(NULL);
-	struct tm  today = *localtime(&t);
-	mes = today.tm_mon;
-	dia = today.tm_mday;
-	ano = today.tm_year + 1900;
-	hora = today.tm_hour;
-	minutos = today.tm_min;
-	segundos = today.tm_sec;
 
-	string FechaHora = to_string(dia)  + "/" + to_string(mes)  + "/" + to_string(ano)+"__"+to_string(hora)+":"+to_string(minutos)+":"+to_string(segundos);
-
-	file.open("server.log", ios::app | ios::out);
+	file.open("Log/server.log", ios::app | ios::out);
 	
-		if (file.fail()) {
-			cout << "no se pudo abrir el archivo";
-			exit(1);
-		}
+	if (file.fail()) {
+		cout << "no se pudo abrir el archivo";
+		exit(1);
+	}
 		
-			file << "------------------------------------------------" << endl;
-			file << FechaHora<<"--->"<<mensaje.c_str() << endl;
-				
+	file << "------------------------------------------------" << endl;
+	file << getFechaHoraActual() <<"--->"<<mensaje.c_str() << endl;
 }
 bool validarServicio(char* texto) {
 	ifstream archivo("infoServicios.bin", ifstream::binary);
@@ -207,13 +197,12 @@ void altaServicio(string mensaje) {
 	string init = mensaje + butacas;
 	fstream f;
 	f.open("infoServicios.bin", ios::app | ios::binary);
-
+	
 	if (f) {
 		size_t largo = strnlen(init.c_str(), init.length());
 		
 		bool flag = validarServicio(prueba);
 		if (flag!=true) {
-			
 			for (int i = 0; i < largo; i++) {
 				f.put(init[i]);
 			}
@@ -222,8 +211,9 @@ void altaServicio(string mensaje) {
 			cout << "no se puede dar de alta" << endl;
 			exit(1);
 		}
-	f.close();
-	exit(1);
+	  f.close();
+		archivarLogCliente(mensaje + " - AltaServicio");
+    exit(1);
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
@@ -235,7 +225,7 @@ void altaServicio(string mensaje) {
 bool validarLogin(string &mensaje) {
 	// Sacar del mensaje sus 3 valores
 	char delimitador = ';';
-	string comando, usuarioCliente, passCliente;
+	string comando, usuario, passCliente;
 	istringstream input;
 	input.str(mensaje);
 	getline(input, comando, delimitador);
@@ -244,7 +234,7 @@ bool validarLogin(string &mensaje) {
 
 	// Leer archivo y comparar valores
 	bool encontrado=false;
-	string usuario, password, respuesta;
+	string password, respuesta;
 	ifstream archivo;
 	archivo.open("credenciales.txt", ios::in);
 	if (archivo.fail()) {
@@ -255,6 +245,9 @@ bool validarLogin(string &mensaje) {
 		while (getline(archivo, usuario, delimitador) && getline(archivo, password) && !encontrado) {
 			if (usuario == usuarioCliente && password == passCliente) {
 				encontrado = true;
+				archivarLogCliente("=================================");
+				archivarLogCliente("          Inicia sesion          ");
+				archivarLogCliente("=================================");
 			}
 		}
 	}
@@ -317,7 +310,7 @@ void login(SOCKET &clientSocket) {
 		}
 		else {
 			intentos++;
-			// Si llegué a 3 intentos tirar error
+			// Si lleguÃ© a 3 intentos tirar error
 			if (intentos == 3) {
 				mensaje = "excesoDeIntentos";
 			}
@@ -361,7 +354,7 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			peticion.assign(buf);
 			cout << "Mensaje recibido: " << peticion << endl;
 
-			// Procesar la petición dependiendo del tipo de comando que llegó
+			// Procesar la peticiÃ³n dependiendo del tipo de comando que llegÃ³
 			size_t delimitador = peticion.find(';');
 			string comando = peticion.substr(0, delimitador);
 			// Peticion sin comando 
@@ -370,12 +363,13 @@ void atenderPeticiones(SOCKET &clientSocket) {
 			// Switch en base al comando recibido
 			if (comando == "altaServicio")
 				altaServicio(mensaje);
-			else if (comando == "log")
-				archivarLogCliente(mensaje);
-				
+			
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
+			{
 				desconectado = true;
+				archivarLogCliente("Cierra sesion\n");
+			}
 			else
 				enviarMensaje(respuesta, clientSocket);
 		}
@@ -384,27 +378,11 @@ void atenderPeticiones(SOCKET &clientSocket) {
 
 void archivarLogCliente(string mensaje)
 {
-	size_t delimitador = mensaje.find(';');
-	string usuario = mensaje.substr(0, delimitador);
-	string mensajeSinUsuario = mensaje.substr(delimitador).replace(0, 1, "");
-
-	fstream archivo(usuario + ".txt", ios::app | ios::out);
+	fstream archivo("Log/Clientes/" + usuarioCliente + ".txt", ios::app | ios::out);
 
 	if (archivo.is_open())
 	{
-		int dia, mes, ano, hora, minutos, segundos;
-		time_t t = time(NULL);
-		struct tm  today = *localtime(&t);
-		mes = today.tm_mon;
-		dia = today.tm_mday;
-		ano = today.tm_year + 1900;
-		hora = today.tm_hour;
-		minutos = today.tm_min;
-		segundos = today.tm_sec;
-
-		string fechaHora = to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
-
-		archivo << fechaHora + " " + mensajeSinUsuario + "\n";
+		archivo << getFechaHoraActual() + " " + mensaje + "\n";
 		archivo.close();
 	}
 	else
@@ -412,4 +390,19 @@ void archivarLogCliente(string mensaje)
 		cout << "Error al abrir el archivo";
 		EXIT_FAILURE;
 	}
+}
+
+string getFechaHoraActual()
+{
+	int dia, mes, ano, hora, minutos, segundos;
+	time_t t = time(NULL);
+	struct tm  today = *localtime(&t);
+	mes = today.tm_mon + 1;
+	dia = today.tm_mday;
+	ano = today.tm_year + 1900;
+	hora = today.tm_hour;
+	minutos = today.tm_min;
+	segundos = today.tm_sec;
+
+	return to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
 }
