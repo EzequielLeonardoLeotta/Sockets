@@ -20,6 +20,7 @@ void altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
+bool validarServicio(char* texto);
 
 int main()
 {
@@ -163,22 +164,72 @@ void serverLog(string mensaje)
 			file << FechaHora<<"--->"<<mensaje.c_str() << endl;
 				
 }
+bool validarServicio(char* texto) {
+	ifstream archivo("infoServicios.bin", ifstream::binary);
+	if (archivo) {
+		// get length of file:
+		archivo.seekg(0, archivo.end);
+		streamoff length = archivo.tellg();
+		archivo.seekg(0, archivo.beg);
 
+		char* buffer = new char[length]; // buffer = toda la info del archivo
+		int longitud1 = length;
+		int longitud2 = strlen(texto);
+		// read data as a block:
+		char c;
+		archivo.read(buffer, length);
+		if (archivo) {
+			// Procesar buffer
+			c = texto[0];
+			for (int i = 0; i < length; i++) {
+				if (buffer[i] == c) {
+					if (strncmp(&buffer[i], texto, longitud2) == 0) {
+						return true;
+					}
+				}
+			}
+		}
+		else
+			cout << "Error al leer el archivo para leer" << endl;
+		archivo.close();
+		// ...buffer contains the entire file...
+		delete[] buffer;
+		return false;
+	}
+
+}
 void altaServicio(string mensaje) {
+	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
+	char d[] = "";
+	char *prueba=d;
+	strcpy(prueba, mensaje.c_str());
+	string butacas = "00000000000000000000000000000000000000000000000000000000;";
+	string init = mensaje + butacas;
 	fstream f;
 	f.open("infoServicios.bin", ios::app | ios::binary);
 
 	if (f) {
-		size_t largo = strnlen(mensaje.c_str(), sizeof(mensaje));
-		for (int i = 0; i < largo; i++) {
-			f.put(mensaje[i]);
+		size_t largo = strnlen(init.c_str(), init.length());
+		
+		bool flag = validarServicio(prueba);
+		if (flag!=true) {
+			
+			for (int i = 0; i < largo; i++) {
+				f.put(init[i]);
+			}
 		}
-		f.close();
+		else {
+			cout << "no se puede dar de alta" << endl;
+			exit(1);
+		}
+	f.close();
+	exit(1);
 	}
 	else {
 		cout << "Error al abrir el archivo para escribir" << endl;
 		exit(1);
 	}
+
 }
 
 bool validarLogin(string &mensaje) {
