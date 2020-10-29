@@ -22,6 +22,7 @@ void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
 bool validarServicio(char* texto);
 string getFechaHoraActual();
+void verRegistroDeActividades(SOCKET& clientSocket);
 
 //Variables globales
 string usuarioCliente;
@@ -363,6 +364,8 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			// Switch en base al comando recibido
 			if (comando == "altaServicio")
 				altaServicio(mensaje);
+			else if (comando == "verRegistro")
+				verRegistroDeActividades(clientSocket);
 
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
@@ -405,4 +408,23 @@ string getFechaHoraActual()
 	segundos = today.tm_sec;
 
 	return to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+}
+
+void verRegistroDeActividades(SOCKET& clientSocket)
+{
+	string linea;
+	ifstream archivo("Log/Clientes/" + usuarioCliente + ".txt");
+	if (archivo.is_open())
+	{
+		while (getline(archivo, linea))
+		{
+			enviarMensaje(linea, clientSocket);
+		}
+		archivo.close();
+	}
+	else
+	{
+		cout << "Error al abrir el archivo";
+		EXIT_FAILURE;
+	}
 }
