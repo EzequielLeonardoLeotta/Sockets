@@ -16,7 +16,7 @@ using namespace std;
 bool validarLogin(string& mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 void login(SOCKET& clientSocket);
-void altaServicio(string mensaje);
+bool altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
@@ -190,14 +190,15 @@ bool validarServicio(char* texto) {
 	}
 }
 
-void altaServicio(string mensaje) {
+bool altaServicio(string mensaje) {
 	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
-	char d[] = "";
+	char d[100] = "";
 	char* prueba = d;
 	strcpy(prueba, mensaje.c_str());
 	string butacas = "00000000000000000000000000000000000000000000000000000000;";
 	string init = mensaje + butacas;
 	fstream f;
+	bool value=false;
 	f.open("infoServicios.bin", ios::app | ios::binary);
 
 	if (f) {
@@ -208,19 +209,21 @@ void altaServicio(string mensaje) {
 			for (int i = 0; i < largo; i++) {
 				f.put(init[i]);
 			}
+			archivarLogCliente(mensaje + " - AltaServicio");
+			
+			value = true;
+			//return value;
 		}
 		else {
 			cout << "no se puede dar de alta" << endl;
-			exit(1);
+			value = false;
+			//return value;
 		}
-		f.close();
-		archivarLogCliente(mensaje + " - AltaServicio");
-		exit(1);
+		
 	}
-	else {
-		cout << "Error al abrir el archivo para escribir" << endl;
-		exit(1);
-	}
+	f.close();
+	cout << "VALOR DEl ALTA"<<value;
+	return value;
 }
 
 bool validarLogin(string& mensaje) {
@@ -362,8 +365,19 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			string mensaje = peticion.substr(delimitador).replace(0, 1, "");
 
 			// Switch en base al comando recibido
-			if (comando == "altaServicio")
-				altaServicio(mensaje);
+			if (comando == "altaServicio"){
+				bool value = altaServicio(mensaje);
+				if (value) {
+					respuesta = "altaOk";
+					enviarMensaje(respuesta,clientSocket);
+				}
+				else {
+					respuesta = "altaNegada";
+					enviarMensaje(respuesta,clientSocket);
+				}
+			}
+				
+
 			else if (comando == "verRegistro")
 				verRegistroDeActividades(clientSocket);
 
