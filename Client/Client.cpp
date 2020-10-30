@@ -142,19 +142,18 @@ void altaServicio(SOCKET& sock) {
 	if (enviarMensaje(alta, sock) != 1) {
 		while (recibirMensaje(sock) != "")
 		{
-			if (recibirMensaje(sock) == "altaOk") {
+			string res = recibirMensaje(sock);
+			if (res == "altaOk") {
 				cout << "Se genero con exito el serivicio";
 				system("pause");
 				menu(sock);
 			}
-			else {
-				if (recibirMensaje(sock) == "altaNegada") {
+			
+			if (res == "altaNegada") {
 					cout << "El servicio se repite o no cumple con las condiciones requeridas";
 					system("pause");
 					menu(sock);
-				}
 			}
-
 		    
 		}
 	}
@@ -162,9 +161,6 @@ void altaServicio(SOCKET& sock) {
 		cout << "Error al enviar mensaje";
 		menu(sock);
 	}
-	menu(sock);
-	system("pause");
-	
 }
 
 void gestionPasaje() {
