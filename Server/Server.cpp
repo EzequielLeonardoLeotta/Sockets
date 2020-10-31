@@ -448,33 +448,42 @@ void verRegistroDeActividades(SOCKET& clientSocket)
 
 void getServicios(SOCKET& clientSocket, string& mensaje)
 {
-	size_t delimitador = mensaje.find(';');
 	// Obtengo el campo por el que voy a filtrar
-	string tipoFiltro = mensaje.substr(0, delimitador);
+	string tipoFiltro = mensaje.substr(0, mensaje.find(';'));
 	// Obtengo los parametros para filtrar
-	string parametro1 = mensaje.substr(delimitador).replace(0, 1, ""); //Siempre va a haber como minimo un parametro
+	mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
+	string parametro1 = mensaje.substr(0, mensaje.find(';')); //Siempre va a haber como minimo un parametro
 	string parametro2; //Si vienen dos parametros
 	string parametro3; //Si vienen tres parametros
 
-	char charEmpty[100] = "";
-	char* param1 = charEmpty;
-	char* param2 = charEmpty;
-	char* param3 = charEmpty;
+	char charEmpty1[100] = "";
+	char charEmpty2[100] = "";
+	char charEmpty3[100] = "";
+	char* param1 = charEmpty1;
+	char* param2 = charEmpty2;
+	char* param3 = charEmpty3;
 
-	
+	strcpy(param1, parametro1.c_str());
+
 	if (tipoFiltro == "origen" || tipoFiltro == "fecha" || tipoFiltro == "turno")
 	{
-		strcpy(param1, parametro1.c_str());
+		
 	}
 	else if (tipoFiltro == "origen_fecha" || tipoFiltro == "origen_turno" || tipoFiltro == "fecha_turno")
 	{
-		strcpy(param1, parametro1.c_str());
-		parametro2 = mensaje.substr(delimitador).replace(0, 1, "");
+		mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
+		parametro2 = mensaje.substr(0, mensaje.find(';'));
 		strcpy(param2, parametro2.c_str());
 	}
-	
-
-	
+	else if (tipoFiltro == "origen_fecha_turno")
+	{
+		mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
+		parametro2 = mensaje.substr(0, mensaje.find(';'));
+		strcpy(param2, parametro2.c_str());
+		mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
+		parametro3 = mensaje.substr(0, mensaje.find(';'));
+		strcpy(param3, parametro3.c_str());
+	}
 
 	//ifstream archivo("infoServicios.bin", ifstream::binary);
 	//if (archivo) {
