@@ -77,7 +77,7 @@ int main()
 			string mensaje;
 			string password;
 			respuesta = recibirMensaje(sock);
-
+			cout << "resputa al iniciar session"<<respuesta;
 			while (respuesta == "login") {
 				system("cls");
 
@@ -95,8 +95,16 @@ int main()
 				}
 
 				respuesta = recibirMensaje(sock);
-				cout << "Respuesta del login: " << respuesta << endl;
-				menu(sock);
+				if (respuesta =="loginOK") {
+					cout << "el login esta ok, Bienvenido" << endl;
+					system("pause");
+					menu(sock);
+				}
+				if(respuesta=="login"){
+					cout << "Datos incorrectos, por favor volver a ingresar sus datos" << endl;
+				}
+				system("pause");
+				
 			}
 
 			if (respuesta == "excesoDeIntentos") {
