@@ -453,11 +453,27 @@ void getServicios(SOCKET& clientSocket, string& mensaje)
 	string tipoFiltro = mensaje.substr(0, delimitador);
 	// Obtengo los parametros para filtrar
 	string parametro1 = mensaje.substr(delimitador).replace(0, 1, ""); //Siempre va a haber como minimo un parametro
+	string parametro2; //Si vienen dos parametros
+	string parametro3; //Si vienen tres parametros
+
+	char charEmpty[100] = "";
+	char* param1 = charEmpty;
+	char* param2 = charEmpty;
+	char* param3 = charEmpty;
 
 	
-	if(tipoFiltro == "origen")
-
+	if (tipoFiltro == "origen" || tipoFiltro == "fecha" || tipoFiltro == "turno")
+	{
+		strcpy(param1, parametro1.c_str());
+	}
+	else if (tipoFiltro == "origen_fecha" || tipoFiltro == "origen_turno" || tipoFiltro == "fecha_turno")
+	{
+		strcpy(param1, parametro1.c_str());
+		parametro2 = mensaje.substr(delimitador).replace(0, 1, "");
+		strcpy(param2, parametro2.c_str());
+	}
 	
+
 	
 
 	//ifstream archivo("infoServicios.bin", ifstream::binary);
@@ -479,16 +495,15 @@ void getServicios(SOCKET& clientSocket, string& mensaje)
 	//		for (int i = 0; i < length; i++) {
 	//			if (buffer[i] == c) {
 	//				if (strncmp(&buffer[i], texto, longitud2) == 0) {
-	//					return true;
+	//					
 	//				}
 	//			}
 	//		}
 	//	}
 	//	else
-	//		cout << "Error al leer el archivo para leer" << endl;
+	//		cout << "Error al leer el archivo" << endl;
 	//	archivo.close();
 	//	// ...buffer contains the entire file...
 	//	delete[] buffer;
-	//	return false;
 	//}
 }
