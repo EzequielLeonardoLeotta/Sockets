@@ -25,11 +25,10 @@ string getFechaHoraActual();
 void verRegistroDeActividades(SOCKET& clientSocket);
 void getServicios(SOCKET& clientSocket, string& mensaje);
 char* getContenidoArchivo();
-char* filtrarServicios(char* contenidoArchivo, string tipoFiltro, char* param1, char* param2, char* param3);
+string filtrarServicios(string& contenidoArchivo, string& tipoFiltro, char* param1, char* param2, char* param3);
 
 //Variables globales
 string usuarioCliente;
-
 
 int main()
 {
@@ -468,18 +467,18 @@ void getServicios(SOCKET& clientSocket, string& mensaje)
 	strcpy(param1, parametro1.c_str());
 
 	char* contenidoArchivo = getContenidoArchivo();
-	char* servicios;
+	string servicios;
 
 	if (tipoFiltro == "origen" || tipoFiltro == "fecha" || tipoFiltro == "turno")
 	{
-		servicios = filtrarServicios(contenidoArchivo, tipoFiltro, param1, param2, param3);
+		
 	}
 	else if (tipoFiltro == "origen_fecha" || tipoFiltro == "origen_turno" || tipoFiltro == "fecha_turno")
 	{
 		mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
 		parametro2 = mensaje.substr(0, mensaje.find(';'));
 		strcpy(param2, parametro2.c_str());
-		servicios = filtrarServicios(contenidoArchivo, tipoFiltro, param1, param2, param3);
+		
 	}
 	else if (tipoFiltro == "origen_fecha_turno")
 	{
@@ -489,8 +488,10 @@ void getServicios(SOCKET& clientSocket, string& mensaje)
 		mensaje = mensaje.substr(mensaje.find(';')).replace(0, 1, "");
 		parametro3 = mensaje.substr(0, mensaje.find(';'));
 		strcpy(param3, parametro3.c_str());
-		servicios = filtrarServicios(contenidoArchivo, tipoFiltro, param1, param2, param3);
 	}
+
+	string archivo = contenidoArchivo;
+	servicios = filtrarServicios(archivo, tipoFiltro, param1, param2, param3);
 }
 
 char* getContenidoArchivo()
@@ -512,23 +513,47 @@ char* getContenidoArchivo()
 		cout << "Error al leer el archivo" << endl;
 }
 
-char* filtrarServicios(char* contenidoArchivo, string tipoFiltro, char* param1, char* param2, char* param3)
+string filtrarServicios(string& contenidoArchivo, string& tipoFiltro, char* param1, char* param2, char* param3)
 {
-	char* buffer = new char[strlen(contenidoArchivo)]; // buffer del tamaño del contenido del archivo
-	char c;
+	//int length = strlen(contenidoArchivo);
+	//char* buffer = new char[length]; // buffer del tamaño del contenido del archivo
+
+	//if (contenidoArchivo != "")
+	//{
+	//	// Procesar contenidoArchivo
+	//	char c;
+	//	if (tipoFiltro == "origen")
+	//	{
+	//		c = param1[0];
+	//		for (int i = 0; i < length; i++) {
+	//			if (contenidoArchivo[i] == c) {
+	//				buffer += contenidoArchivo.substr();
+	//			}
+	//		}
+	//	}
+	//}
+
+	size_t length = strnlen(contenidoArchivo.c_str(), contenidoArchivo.length());
+	//char* buffer = new char[length]; // buffer del tamaño del contenido del archivo
+	string serviciosFiltrados;
+
 	if (contenidoArchivo != "")
 	{
 		// Procesar contenidoArchivo
-		/*c = texto[0];
-		for (int i = 0; i < length; i++) {
-			if (buffer[i] == c) {
-				if (strncmp(&buffer[i], texto, longitud2) == 0) {
-
-				}
+		
+		if (tipoFiltro == "origen")
+		{
+			size_t delimitador = contenidoArchivo.find(param1);
+			//string servicio = contenidoArchivo.substr(0, mensaje.find(';'));
+			
+			for (int i = 0; i < length; i++) {
+				/*if (contenidoArchivo[i] == c) {
+					serviciosFiltrados.append(contenidoArchivo.substr());
+				}*/
 			}
-		}*/
+		}
 	}
 	else
 		cout << "No se encuentran servicios con los parametros proporcionados" << endl;
-	return buffer;
+	return serviciosFiltrados;
 }
