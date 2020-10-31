@@ -130,7 +130,7 @@ int main()
 
 // Implementaciones
 void altaServicio(SOCKET& sock) {
-	string origen, fecha, turno, alta, log;
+	string origen, fecha, turno, alta;
 
 	system("cls");
 	cout << "Alta de servicio" << endl;
@@ -157,7 +157,71 @@ void gestionPasaje() {
 
 void gestionPasaje(SOCKET& sock) {
 	system("cls");
-	cout << "Gestion de pasajes" << endl << endl;
+
+	int opcion;
+	bool conectado = true;
+
+	while (conectado) {
+		opcion = 0;
+		while (opcion < 1 || opcion>7) {
+			system("cls");
+			cout << "Busqueda de servicio" << endl << endl
+				<< "Filtrar por:" << endl
+				<< "1: Origen" << endl
+				<< "2: Fecha" << endl
+				<< "3: Turno" << endl
+				<< "4: Origen y Fecha" << endl
+				<< "5: Origen y Turno" << endl
+				<< "6: Fecha y Turno" << endl
+				<< "7: Cerrar sesión" << endl << endl
+				<< "Elija una opción: ";
+			cin >> opcion;
+		}
+
+		system("cls");
+		string mensaje = "getServicios;", origen, fecha, turno;
+		cout << "Busqueda de servicio" << endl << endl
+			<< "Origen: M = Mar del Plata | B = Buenos Aires" << endl
+			<< "Fecha: DD/MM/AAAA" << endl
+			<< "Turno: M = Mañana | T = Tarde | N = Noche" << endl << endl;
+
+		switch (opcion) {
+		case 1:
+			cout << "Ingrese origen: "; cin >> origen;
+			mensaje += "origen" + origen + ";";
+			break;
+		case 2:
+			cout << "Ingrese fecha: "; cin >> fecha;
+			mensaje += "fecha" + fecha + ";";
+			break;
+		case 3:
+			cout << "Ingrese turno: "; cin >> turno;
+			mensaje += "turno" + turno + ";";
+			break;
+		case 4:
+			cout << "Ingrese origen: "; cin >> origen;
+			cout << "Ingrese fecha: "; cin >> fecha;
+			mensaje += "origen_fecha" + origen + ";" + fecha + ";";
+			break;
+		case 5:
+			cout << "Ingrese origen: "; cin >> origen;
+			cout << "Ingrese turno: "; cin >> turno;
+			mensaje += "origen_turno" + origen + ";" + turno + ";";
+			break;
+		case 6:
+			cout << "Ingrese fecha: "; cin >> fecha;
+			cout << "Ingrese turno: "; cin >> turno;
+			mensaje += "fecha_turno" + fecha + ";" + turno + ";";
+			break;
+		case 7:
+			// Salir del menú para volver a la conexión al servidor
+			conectado = false;
+			break;
+		default:
+			break;
+		}
+	}
+
 	system("pause");
 }
 
