@@ -451,10 +451,14 @@ void getServicios(SOCKET& clientSocket, string& mensaje)
 	size_t delimitador = mensaje.find(';');
 	// Obtengo el campo por el que voy a filtrar
 	string tipoFiltro = mensaje.substr(0, delimitador);
+	// Obtengo los parametros para filtrar
+	string parametro1 = mensaje.substr(delimitador).replace(0, 1, ""); //Siempre va a haber como minimo un parametro
+
+	
+	if(tipoFiltro == "origen")
+
 	
 	
-	
-	//string mensaje = peticion.substr(delimitador).replace(0, 1, "");
 
 	//ifstream archivo("infoServicios.bin", ifstream::binary);
 	//if (archivo) {

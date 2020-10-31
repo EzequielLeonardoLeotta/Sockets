@@ -170,7 +170,7 @@ void gestionPasaje(SOCKET& sock) {
 
 	while (conectado) {
 		opcion = 0;
-		while (opcion < 1 || opcion>7) {
+		while (opcion < 1 || opcion>8) {
 			system("cls");
 			cout << "Busqueda de servicio" << endl << endl
 				<< "Filtrar por:" << endl
@@ -180,7 +180,8 @@ void gestionPasaje(SOCKET& sock) {
 				<< "4: Origen y Fecha" << endl
 				<< "5: Origen y Turno" << endl
 				<< "6: Fecha y Turno" << endl
-				<< "7: Cerrar sesión" << endl << endl
+				<< "7: Origen, Fecha y Turno" << endl
+				<< "8: Cerrar sesión" << endl << endl
 				<< "Elija una opción: ";
 			cin >> opcion;
 		}
@@ -221,6 +222,12 @@ void gestionPasaje(SOCKET& sock) {
 			mensaje += "fecha_turno;" + fecha + ";" + turno + ";";
 			break;
 		case 7:
+			cout << "Ingrese origen: "; cin >> origen;
+			cout << "Ingrese fecha: "; cin >> fecha;
+			cout << "Ingrese turno: "; cin >> turno;
+			mensaje += "origen_fecha_turno;" + origen + ";" + fecha + ";" + turno + ";";
+			break;
+		case 8:
 			// Salir del menú para volver a la conexión al servidor
 			conectado = false;
 			break;
