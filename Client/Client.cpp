@@ -150,23 +150,16 @@ void altaServicio(SOCKET& sock) {
 			}
 			
 			if (res == "altaNegada") {
-					cout << "El servicio se repite o no cumple con las condiciones requeridas";
-					system("pause");
-					menu(sock);
+				cout << "El servicio se repite o no cumple con las condiciones requeridas";
+				system("pause");
+				menu(sock);
 			}
-		    
 		}
 	}
 	else {
 		cout << "Error al enviar mensaje";
 		menu(sock);
 	}
-}
-
-void gestionPasaje() {
-	system("cls");
-	cout << "Alta de servicios" << endl << endl;
-	system("pause");
 }
 
 void gestionPasaje(SOCKET& sock) {
@@ -202,30 +195,30 @@ void gestionPasaje(SOCKET& sock) {
 		switch (opcion) {
 		case 1:
 			cout << "Ingrese origen: "; cin >> origen;
-			mensaje += "origen" + origen + ";";
+			mensaje += "origen;" + origen + ";";
 			break;
 		case 2:
 			cout << "Ingrese fecha: "; cin >> fecha;
-			mensaje += "fecha" + fecha + ";";
+			mensaje += "fecha;" + fecha + ";";
 			break;
 		case 3:
 			cout << "Ingrese turno: "; cin >> turno;
-			mensaje += "turno" + turno + ";";
+			mensaje += "turno;" + turno + ";";
 			break;
 		case 4:
 			cout << "Ingrese origen: "; cin >> origen;
 			cout << "Ingrese fecha: "; cin >> fecha;
-			mensaje += "origen_fecha" + origen + ";" + fecha + ";";
+			mensaje += "origen_fecha;" + origen + ";" + fecha + ";";
 			break;
 		case 5:
 			cout << "Ingrese origen: "; cin >> origen;
 			cout << "Ingrese turno: "; cin >> turno;
-			mensaje += "origen_turno" + origen + ";" + turno + ";";
+			mensaje += "origen_turno;" + origen + ";" + turno + ";";
 			break;
 		case 6:
 			cout << "Ingrese fecha: "; cin >> fecha;
 			cout << "Ingrese turno: "; cin >> turno;
-			mensaje += "fecha_turno" + fecha + ";" + turno + ";";
+			mensaje += "fecha_turno;" + fecha + ";" + turno + ";";
 			break;
 		case 7:
 			// Salir del menú para volver a la conexión al servidor
@@ -233,6 +226,29 @@ void gestionPasaje(SOCKET& sock) {
 			break;
 		default:
 			break;
+		}
+
+		if (enviarMensaje(mensaje, sock) != 1) {
+			/*while (recibirMensaje(sock) != "")
+			{
+				string res = recibirMensaje(sock);
+				if (res == "altaOk") {
+					cout << "Se genero con exito el serivicio";
+					system("pause");
+					menu(sock);
+				}
+
+				if (res == "altaNegada") {
+					cout << "El servicio se repite o no cumple con las condiciones requeridas";
+					system("pause");
+					menu(sock);
+				}
+
+			}*/
+		}
+		else {
+			cout << "Error al enviar mensaje";
+			menu(sock);
 		}
 	}
 
@@ -250,12 +266,14 @@ void verRegistro(SOCKET& sock) {
 		{
 			cout << recibirMensaje(sock) << endl;
 		}
+		system("pause");
+		menu(sock);
 	}
 	else {
 		cout << "Error al enviar mensaje";
+		system("pause");
+		menu(sock);
 	}
-
-	system("pause");
 }
 
 void menu(SOCKET& sock) {

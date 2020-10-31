@@ -23,6 +23,7 @@ void archivarLogCliente(string mensaje);
 bool validarServicio(char* texto);
 string getFechaHoraActual();
 void verRegistroDeActividades(SOCKET& clientSocket);
+void getServicios(SOCKET& clientSocket, string& mensaje);
 
 //Variables globales
 string usuarioCliente;
@@ -365,21 +366,23 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			string mensaje = peticion.substr(delimitador).replace(0, 1, "");
 
 			// Switch en base al comando recibido
-			if (comando == "altaServicio"){
+			if (comando == "altaServicio") {
 				bool value = altaServicio(mensaje);
 				if (value) {
 					respuesta = "altaOk";
-					enviarMensaje(respuesta,clientSocket);
+					enviarMensaje(respuesta, clientSocket);
 				}
 				else {
 					respuesta = "altaNegada";
-					enviarMensaje(respuesta,clientSocket);
+					enviarMensaje(respuesta, clientSocket);
 				}
 			}
-				
+
 
 			else if (comando == "verRegistro")
 				verRegistroDeActividades(clientSocket);
+			else if (comando == "getServicios")
+				getServicios(clientSocket, mensaje);
 
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
@@ -441,4 +444,47 @@ void verRegistroDeActividades(SOCKET& clientSocket)
 		cout << "Error al abrir el archivo";
 		EXIT_FAILURE;
 	}
+}
+
+void getServicios(SOCKET& clientSocket, string& mensaje)
+{
+	size_t delimitador = mensaje.find(';');
+	// Obtengo el campo por el que voy a filtrar
+	string tipoFiltro = mensaje.substr(0, delimitador);
+	
+	
+	
+	//string mensaje = peticion.substr(delimitador).replace(0, 1, "");
+
+	//ifstream archivo("infoServicios.bin", ifstream::binary);
+	//if (archivo) {
+	//	// get length of file:
+	//	archivo.seekg(0, archivo.end);
+	//	streamoff length = archivo.tellg();
+	//	archivo.seekg(0, archivo.beg);
+
+	//	char* buffer = new char[length]; // buffer = toda la info del archivo
+	//	int longitud1 = length;
+	//	int longitud2 = strlen(texto);
+	//	// read data as a block:
+	//	char c;
+	//	archivo.read(buffer, length);
+	//	if (archivo) {
+	//		// Procesar buffer
+	//		c = texto[0];
+	//		for (int i = 0; i < length; i++) {
+	//			if (buffer[i] == c) {
+	//				if (strncmp(&buffer[i], texto, longitud2) == 0) {
+	//					return true;
+	//				}
+	//			}
+	//		}
+	//	}
+	//	else
+	//		cout << "Error al leer el archivo para leer" << endl;
+	//	archivo.close();
+	//	// ...buffer contains the entire file...
+	//	delete[] buffer;
+	//	return false;
+	//}
 }
