@@ -8,6 +8,7 @@
 #include <sstream>
 #include <ctime>
 #include <vector>
+
 #pragma comment (lib, "ws2_32.lib")
 
 using namespace std;
@@ -26,16 +27,24 @@ void verRegistroDeActividades(SOCKET& clientSocket);
 
 //Variables globales
 string usuarioCliente;
+string estadoCliente;
 
 int main()
 {
-	// Limpiar Winsock
-	WSACleanup();
 	//Caracteres en español
 	setlocale(LC_ALL, "es_AR.UTF8");
-	serverLog("Inicio de Servidor");
+
+	// Limpiar Winsock para evitar bugs al reactivar la libreria
+	WSACleanup();
+
 	//Bucle infinito de servicio del servidor
 	while (true) {
+		// Inicia servidor
+		cout << "=================================\n          Inicia servidor        \n=================================" << endl;
+		serverLog("=================================");
+		serverLog("          Inicia servidor        ");
+		serverLog("=================================");
+
 		// Iniciar Winsock
 		WSADATA wsData;
 		WORD ver = MAKEWORD(2, 2);
@@ -49,6 +58,7 @@ int main()
 		// Crear socket de escucha
 		string ip = "127.0.0.1";
 		int puerto = 54000;
+
 		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
 		if (listening == INVALID_SOCKET)
 		{
@@ -56,7 +66,6 @@ int main()
 			WSACleanup();
 			break;
 		}
-		serverLog("Se creo socket");
 
 		// Vincular la direccion ip y el puerto al socket de escucha
 		sockaddr_in hint;
@@ -73,8 +82,8 @@ int main()
 			break;
 		}
 
-		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
-		serverLog("Servidor escuchando en puerto: " + to_string(puerto));
+		cout << "Socket creado. Servidor escuchando en " << ip << ":" << puerto << endl;
+		serverLog("Socket creado. Servidor escuchando en puerto: " + to_string(puerto));
 
 		// Esperar una conexion
 		sockaddr_in client;
@@ -87,7 +96,6 @@ int main()
 			serverLog("No se pudo crear socket del cliente");
 			break;
 		}
-		serverLog("Creacion de socket cliente exitosa");
 		char host[NI_MAXHOST];		// Nombre del equipo remoto
 		char service[NI_MAXSERV];	// Puerto del equipo remoto
 
@@ -95,13 +103,15 @@ int main()
 		ZeroMemory(service, NI_MAXSERV);
 
 		if (getnameinfo((sockaddr*)& client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0) {
-			cout << host << " conectado en puerto " << service << endl;
+			cout << host << " conectado en puerto " << service << endl;	
+			serverLog("Conexion establecida con cliente: " + (string)host + ": " + service);
 		}
 		else {
 			inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
 			cout << host << " conectado en puerto " <<
 				ntohs(client.sin_port) << endl;
-		}
+			serverLog("Conexion establecida con cliente: " + (string)host + ": " + service);
+		}		
 
 		// Cerrar socket de escucha porque se conectó un cliente
 		closesocket(listening);
@@ -114,10 +124,17 @@ int main()
 		// Enviar pedido de usuario y contraseña
 		login(clientSocket);
 
-		// Atender peticiones del cliente hasta que se desconecte
-		atenderPeticiones(clientSocket);
+		if (estadoCliente == "logueado") {
+			// Atender peticiones del cliente hasta que se desconecte
+			atenderPeticiones(clientSocket);
 
-		cout << "--------------------------------------------------" << endl << endl;
+			// Loguear el cierre de sesión
+			string log = "Usuario " + usuarioCliente + " cierra sesión";
+			archivarLogCliente(log);
+			serverLog(log);
+			estadoCliente = "deslogueado";
+			cout << log << endl;
+		}
 
 		// Apagar el socket antes de cerrarlo
 		iResult = shutdown(clientSocket, SD_SEND);
@@ -127,6 +144,8 @@ int main()
 
 		// Cerrar el socket
 		closesocket(clientSocket);
+		serverLog("Conexion terminada con cliente: " + (string)host + ": " + service);
+		cout << endl;
 
 		// Limpiar Winsock
 		WSACleanup();
@@ -152,7 +171,7 @@ void serverLog(string mensaje)
 		exit(1);
 	}
 
-	file << "------------------------------------------------" << endl;
+	/*file << "------------------------------------------------" << endl;*/
 	file << getFechaHoraActual() << "--->" << mensaje.c_str() << endl;
 }
 
@@ -251,9 +270,6 @@ bool validarLogin(string& mensaje) {
 		while (getline(archivo, usuario, delimitador) && getline(archivo, password) && !encontrado) {
 			if (usuario == usuarioCliente && password == passCliente) {
 				encontrado = true;
-				archivarLogCliente("=================================");
-				archivarLogCliente("          Inicia sesion          ");
-				archivarLogCliente("=================================");
 			}
 		}
 	}
@@ -280,6 +296,7 @@ int enviarMensaje(string& mensaje, SOCKET& sock) {
 void login(SOCKET& clientSocket) {
 	bool logueado = false;
 	bool timeoutCliente = false;
+	bool error = false;
 	string mensaje;
 	int resultado;
 	char buf[4096];
@@ -310,8 +327,12 @@ void login(SOCKET& clientSocket) {
 		}
 
 		// Validar el login
-		if (validarLogin(respuesta)) {
+		if (validarLogin(respuesta)&&!timeoutCliente) {
 			mensaje = "loginOK";
+			estadoCliente = "logueado";
+			string log = "Usuario " + usuarioCliente + " inicia sesión";
+			archivarLogCliente(log);
+			serverLog(log);
 			logueado = true;
 		}
 		else {
@@ -321,7 +342,6 @@ void login(SOCKET& clientSocket) {
 				mensaje = "excesoDeIntentos";
 			}
 		}
-
 
 		//Enviar respuesta
 		if (!timeoutCliente) {
@@ -339,7 +359,7 @@ void atenderPeticiones(SOCKET& clientSocket) {
 	string respuesta;
 
 	// Recibir hasta que el cliente corte la conexion
-	while (!desconectado && !timeoutCliente) {
+	while (!desconectado && !timeoutCliente && estadoCliente=="logueado") {
 		iResult = recv(clientSocket, buf, 4096, 0);
 		if (iResult == SOCKET_ERROR) {
 			if (WSAGetLastError() == 10060) {
@@ -366,31 +386,27 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			// Peticion sin comando 
 			string mensaje = peticion.substr(delimitador).replace(0, 1, "");
 
-			// Switch en base al comando recibido
-			if (comando == "altaServicio"){
-				bool value = altaServicio(mensaje);
-				if (value) {
-					respuesta = "altaOk";
-					enviarMensaje(respuesta,clientSocket);
-				}
-				else {
-					respuesta = "altaNegada";
-					enviarMensaje(respuesta,clientSocket);
-				}
-			}
-				
-
-			else if (comando == "verRegistro")
-				verRegistroDeActividades(clientSocket);
+			// Atender altaServicio
+			
 
 			// Enviar respuesta
 			if (comando == "cerrarSesion")
 			{
 				desconectado = true;
-				archivarLogCliente("Cierra sesion\n");
 			}
-			else
-				enviarMensaje(respuesta, clientSocket);
+			else if (comando == "altaServicio") {
+				bool value = altaServicio(mensaje);
+				if (value) {
+					respuesta = "altaOk";
+					enviarMensaje(respuesta, clientSocket);
+				}
+				else {
+					respuesta = "altaNegada";
+					enviarMensaje(respuesta, clientSocket);
+				}
+			}
+			else if (comando == "verRegistro")
+				verRegistroDeActividades(clientSocket);
 		}
 	}
 }
@@ -406,8 +422,8 @@ void archivarLogCliente(string mensaje)
 	}
 	else
 	{
-		cout << "Error al abrir el archivo";
-		EXIT_FAILURE;
+		cout << endl << "Error al abrir el archivo de log del usuario " << usuarioCliente << endl;
+		EXIT_FAILURE; // para que?
 	}
 }
 

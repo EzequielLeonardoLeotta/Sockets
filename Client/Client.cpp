@@ -18,11 +18,11 @@ void menu(SOCKET& sock);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 string recibirMensaje(SOCKET& sock);
 
+// Variables globales
+string usuario;
+
 int main()
 {
-	// Variables globales
-	string usuario;
-
 	//Caracteres en español
 	setlocale(LC_ALL, "es_AR.UTF8");
 
@@ -44,17 +44,20 @@ int main()
 		int wsResult = WSAStartup(ver, &data);
 		if (wsResult != 0)
 		{
-			cerr << "No se pudo arrancar Winsock" << endl;
-			return 1;
+			cerr << "No se pudo arrancar Winsock" << endl << endl;
+			system("pause");
+			exit(1);
 		}
 
 		// Crear socket
 		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 		if (sock == INVALID_SOCKET)
 		{
-			cerr << "No se pudo crear el socket" << endl;
+			cerr << "No se pudo crear el socket" << endl << endl;
+			system("pause");
 			WSACleanup();
-			return 1;
+
+			exit(1);
 		}
 
 		// Hint de estructura de informacion para la conexion
@@ -66,6 +69,9 @@ int main()
 		// Conectar al servidor
 		int connResult = connect(sock, (sockaddr*)& hint, sizeof(hint));
 		if (connResult == SOCKET_ERROR) {
+			closesocket(sock);
+			WSACleanup();
+
 			cerr << endl << "No se pudo conectar al servidor" << endl << endl;
 			system("pause");
 		}
@@ -77,7 +83,7 @@ int main()
 			string mensaje;
 			string password;
 			respuesta = recibirMensaje(sock);
-			cout << "resputa al iniciar session"<<respuesta;
+			
 			while (respuesta == "login") {
 				system("cls");
 
@@ -95,23 +101,19 @@ int main()
 				}
 
 				respuesta = recibirMensaje(sock);
-				if (respuesta =="loginOK") {
-					cout << "el login esta ok, Bienvenido" << endl;
-					system("pause");
-					menu(sock);
-				}
 				if(respuesta=="login"){
-					cout << "Datos incorrectos, por favor volver a ingresar sus datos" << endl;
+					cout << "Error: Usuario o contraseña incorrectos" << endl << endl;
+					system("pause");
 				}
-				system("pause");
 				
 			}
 
 			if (respuesta == "excesoDeIntentos") {
-				cout << "Se superó la cantidad máxima de intentos de ingreso" << endl;
+				cout << "Error: Se superó la cantidad máxima de intentos de ingreso" << endl << endl;
+				system("pause");
 			}
 			else {
-				// Mostrar el menú
+				// Entrar al menú principal
 				menu(sock);
 			}
 
@@ -120,15 +122,13 @@ int main()
 			enviarMensaje(respuesta, sock);
 			cout << endl << "Saliendo del sistema" << endl << endl;
 			system("pause");
-		}
 
-		// Apagar el socket antes de cerrarlo
-		int iResult = shutdown(sock, SD_SEND);
-		if (iResult == SOCKET_ERROR) {
-			cout << "Error al apagar el socket" << endl;
+			// Apagar el socket antes de cerrarlo
+			int iResult = shutdown(sock, SD_SEND | SD_RECEIVE);
+			if (iResult == SOCKET_ERROR) {
+				cout << "Error al apagar el socket" << endl;
+			}
 		}
-
-		// Cerrar el socket y limpiar Winsock
 		closesocket(sock);
 		WSACleanup();
 	}
@@ -154,20 +154,16 @@ void altaServicio(SOCKET& sock) {
 			if (res == "altaOk") {
 				cout << "Se genero con exito el serivicio";
 				system("pause");
-				menu(sock);
 			}
 			
 			if (res == "altaNegada") {
 					cout << "El servicio se repite o no cumple con las condiciones requeridas";
 					system("pause");
-					menu(sock);
 			}
-		    
 		}
 	}
 	else {
 		cout << "Error al enviar mensaje";
-		menu(sock);
 	}
 }
 
