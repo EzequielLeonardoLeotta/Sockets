@@ -27,11 +27,12 @@ void verRegistroDeActividades(SOCKET& clientSocket);
 //Variables globales
 string usuarioCliente;
 
-
 int main()
 {
+	// Limpiar Winsock
+	WSACleanup();
 	//Caracteres en español
-	setlocale(LC_ALL, "Spanish");
+	setlocale(LC_ALL, "es_AR.UTF8");
 	serverLog("Inicio de Servidor");
 	//Bucle infinito de servicio del servidor
 	while (true) {
@@ -42,22 +43,21 @@ int main()
 		if (iResult != 0)
 		{
 			cerr << "No se pudo iniciar Winsock" << endl;
-			return 1;
+			break;
 		}
 
 		// Crear socket de escucha
 		string ip = "127.0.0.1";
 		int puerto = 54000;
-
 		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
-
 		if (listening == INVALID_SOCKET)
 		{
 			cerr << "No se pudo crear el socket de escucha" << endl;
 			WSACleanup();
-			return 1;
+			break;
 		}
 		serverLog("Se creo socket");
+
 		// Vincular la direccion ip y el puerto al socket de escucha
 		sockaddr_in hint;
 		hint.sin_family = AF_INET;
@@ -72,8 +72,8 @@ int main()
 			closesocket(listening);
 			break;
 		}
-		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
 
+		cout << "Servidor escuchando en " << ip << ":" << puerto << endl;
 		serverLog("Servidor escuchando en puerto: " + to_string(puerto));
 
 		// Esperar una conexion
@@ -143,12 +143,12 @@ void leerServicios() {
 void serverLog(string mensaje)
 {
 	fstream file;
-	cout << mensaje.c_str();
+	/*cout << mensaje.c_str();*/
 
 	file.open("Log/server.log", ios::app | ios::out);
 
 	if (file.fail()) {
-		cout << "no se pudo abrir el archivo";
+		cout << endl << "Error al acceder al archivo server.log";
 		exit(1);
 	}
 
@@ -157,6 +157,7 @@ void serverLog(string mensaje)
 }
 
 bool validarServicio(char* texto) {
+	bool resultado = false;
 	ifstream archivo("infoServicios.bin", ifstream::binary);
 	if (archivo) {
 		// get length of file:
@@ -165,8 +166,9 @@ bool validarServicio(char* texto) {
 		archivo.seekg(0, archivo.beg);
 
 		char* buffer = new char[length]; // buffer = toda la info del archivo
-		int longitud1 = length;
-		int longitud2 = strlen(texto);
+		streamoff longitud1 = length;
+		size_t longitud2 = strlen(texto);
+
 		// read data as a block:
 		char c;
 		archivo.read(buffer, length);
@@ -176,18 +178,18 @@ bool validarServicio(char* texto) {
 			for (int i = 0; i < length; i++) {
 				if (buffer[i] == c) {
 					if (strncmp(&buffer[i], texto, longitud2) == 0) {
-						return true;
+						resultado = true;
 					}
 				}
 			}
 		}
 		else
-			cout << "Error al leer el archivo para leer" << endl;
+			cout << "Error al acceder al archivo infoServicios.bin" << endl;
 		archivo.close();
-		// ...buffer contains the entire file...
+		// liberar memoria del buffer
 		delete[] buffer;
-		return false;
 	}
+	return resultado;
 }
 
 bool altaServicio(string mensaje) {

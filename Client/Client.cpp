@@ -18,18 +18,18 @@ void menu(SOCKET& sock);
 int enviarMensaje(string& mensaje, SOCKET& sock);
 string recibirMensaje(SOCKET& sock);
 
-// Variables globales
-string usuario;
-
 int main()
 {
-	//Caracteres en español
-	setlocale(LC_ALL, "Spanish");
+	// Variables globales
+	string usuario;
 
+	//Caracteres en español
+	setlocale(LC_ALL, "es_AR.UTF8");
+
+	// Pedir IP y puerto. Intentar conexion a esos datos
 	int puerto = 0;
 	string ip = "";
 
-	// Pedir IP y puerto. Intentar conexion a esos datos
 	while (true) {
 		system("cls");
 		cout << "Ingrese los siguientes datos para intentar conectarse al sistema: " << endl << endl;
