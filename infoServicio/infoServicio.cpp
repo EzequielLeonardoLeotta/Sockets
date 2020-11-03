@@ -17,6 +17,7 @@ void menu();
 void alta();
 void mostrarTodo();
 void mostrarFiltrado();
+bool validarServicio(string &filtro);
 
 int main() {
 	// Caracteres en español
@@ -345,14 +346,17 @@ void alta() {
 	string servicio;
 	servicioS >> servicio;
 	
-	// Agregar el servicio al archivo
-	escribirAlArchivo(servicio);
-
 	// Mostrar el servicio dado de alta
 	system("cls");
-	cout << "Se ha dado de alta el siguiente servicio: " << endl << endl;
-	traerServicio(servicio);
-
+	if (!validarServicio(servicio)) {
+		// Agregar el servicio al archivo
+		escribirAlArchivo(servicio);
+		cout << "Se ha dado de alta el siguiente servicio: " << endl << endl;
+		traerServicio(servicio);
+	}
+	else 
+		cout << endl << "Error: ya existe un servicio con los datos ingresados, intentelo nuevamente con otros valores" << endl << endl;
+	
 	system("pause");
 }
 
@@ -401,7 +405,7 @@ void mostrarFiltrado() {
 	cout << endl << "Ingrese fecha del turno que deben tener el/los servicio/s a mostrar." << endl
 		<< "IMPORTANTE!: Si desea no filtrar por fecha ingrese 0" << endl;
 	bool ignorarFecha = false;
-	while (dia < 1 || dia>31) {
+	while (dia < 0 || dia>31) {
 		cout << "Ingrese el día (ej: 11): ";
 		cin >> dia;
 		if (dia == 0)
@@ -468,4 +472,53 @@ void mostrarFiltrado() {
 
 	cout << endl;
 	system("pause");
+}
+
+bool validarServicio(string &filtro) {
+	bool resultado = false;
+	ifstream archivo("../Server/infoServicios.bin", ifstream::binary);
+	if (archivo) {
+		// Leer un registro del archivo
+		bool finArchivo = false;
+		streamoff largoRegistro = 75;
+		char registro[75];
+
+		string origenFiltro, turnoFiltro, fechaFiltro, origen, turno, fecha;
+
+		string delimitador = ";";
+
+		// Partir el filtro en campos
+		origenFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		turnoFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		fechaFiltro = filtro.substr(0, filtro.find(";"));
+
+		// Mientras no sea el fin de archivo mostrar el registro
+		while (!finArchivo) {
+			archivo.get(registro, largoRegistro);
+			if (archivo) {
+				// Pasar el registro de char[] a string
+				string servicio(registro);
+				string temporal(registro);
+
+				// Partir el registro en campos
+				origen = temporal.substr(0, temporal.find(";"));
+				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+				turno = temporal.substr(0, temporal.find(";"));
+				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+				fecha = temporal.substr(0, temporal.find(";"));
+
+				// Comparar strings
+				if (origen == origenFiltro && turno == turnoFiltro && fecha == fechaFiltro)
+					resultado = true;
+
+			}
+			else
+				finArchivo = true;
+		}
+		archivo.close();
+	}
+
+	return resultado;
 }
