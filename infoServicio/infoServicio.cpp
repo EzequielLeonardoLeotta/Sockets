@@ -1,40 +1,28 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <iomanip>
-#include <vector>
-#include <algorithm>
-
+#include<sstream>
 
 using namespace std;
 
 // Declaraciones
 void escribirAlArchivo(string &texto);
 bool findTexto(char* texto);
-
 void traerServicio();
 void traerServicio(string &filtro);
 void mostrarAsientos(string &asientos);
 void mostrarServicio(string &servicio);
+void menu();
+void alta();
+void mostrarTodo();
+void mostrarFiltrado();
 
 int main() {
 	// Caracteres en español
 	setlocale(LC_ALL, "Spanish");
 	
-	// Escribir registro al archivo
-	/*string texto = "m;m;11122020;oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo;";
-	escribirAlArchivo(texto);*/
-
-	// Traer todos los servicios
-	//traerServicio();
-
-	// Traer servicios filtrados string
-	string filtro = ";;;";
-	traerServicio(filtro);
-
-	// traerServicio()
+	menu();
 
 	return 0;
 }
@@ -241,4 +229,243 @@ void mostrarServicio(string &servicio) {
 
 	// Mostrar asientos
 	mostrarAsientos(asientos);
+}
+
+void menu() {
+	int opcion;
+	bool conectado = true;
+
+	while (conectado) {
+		opcion = 0;
+
+		while (opcion < 1 || opcion>4) {
+			system("cls");
+			cout << "Menú principal (infoServicios):" << endl << endl
+				<< "1: Dar de alta un servicio" << endl
+				<< "2: Ver todos los servicios" << endl
+				<< "3: Ver servicios filtrados por usuario" << endl
+				<< "4: Salir" << endl << endl
+				<< "Elija una opción: ";
+			cin >> opcion;
+		}
+
+		switch (opcion) {
+			case 1:
+				alta();
+				break;
+			case 2:
+				mostrarTodo();
+				break;
+			case 3:
+				mostrarFiltrado();
+				break;
+			case 4:
+				conectado = false;
+				break;
+		}
+	}
+}
+
+void alta() {
+	system("cls");
+	cout << "Alta de servicio (infoServicios.bin)" << endl;
+
+	// Pedir origen
+	int origen = 0;
+	while (origen > 2 || origen < 1) {
+		cout << endl << "Origen: " << endl
+			<< "1- Mar del Plata" << endl
+			<< "2- Buenos Aires" << endl
+			<< endl << "Ingrese una opción: ";
+		cin >> origen;
+	}
+
+	// Pedir turno
+	int turno = 0;
+	while (turno > 3 || turno < 1) {
+		cout << endl << "Turno: " << endl
+			<< "1- Mañana" << endl
+			<< "2- Tarde" << endl
+			<< "3- Noche" << endl
+			<< endl << "Ingrese una opción: ";
+		cin >> turno;
+	}
+
+	// Pedir fecha
+	int dia=0;
+	int mes=0;
+	int anio=0;
+	cout << endl << "Fecha: " << endl;
+	while (dia < 1 || dia>31) {
+		cout << "Ingrese el día (ej: 11): ";
+		cin >> dia;
+	}
+	while (mes < 1 || mes>12) {
+		cout << "Ingrese el mes (ej: Enero sería 1): ";
+		cin >> mes;
+	}
+	while (anio < 1900 || anio>2500) {
+		cout << "Ingrese el año (ej: 2020): ";
+		cin >> anio;
+	}
+
+	// Preparar datos en string
+	stringstream servicioS;
+	// Origen
+	switch (origen) {
+		case 1:
+			servicioS << "m;";
+			break;
+		case 2:
+			servicioS << "b;";
+			break;
+	}
+	// Turno
+	switch (turno) {
+	case 1:
+		servicioS << "m;";
+		break;
+	case 2:
+		servicioS << "t;";
+		break;
+	case 3:
+		servicioS << "n;";
+		break;
+	}
+	// Fecha
+	stringstream dato;
+	dato << std::setfill('0') << std::setw(2) << dia 
+		<< std::setfill('0') << std::setw(2) << mes
+		<< anio << ";";
+	string fecha;
+	dato >> fecha;
+	servicioS << fecha;
+	string asientos = "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo;";
+	servicioS << asientos;
+	string servicio;
+	servicioS >> servicio;
+	
+	// Agregar el servicio al archivo
+	escribirAlArchivo(servicio);
+
+	// Mostrar el servicio dado de alta
+	system("cls");
+	cout << "Se ha dado de alta el siguiente servicio: " << endl << endl;
+	traerServicio(servicio);
+
+	system("pause");
+}
+
+void mostrarTodo() {
+	// Traer todos los servicios
+	system("cls");
+	cout << "Todos los servicios existentes en el sistema (infoServicios.bin):" << endl << endl;
+	
+	traerServicio();
+
+	cout << endl;
+	system("pause");
+}
+
+void mostrarFiltrado() {
+	system("cls");
+	cout << "Ver servicios en base a su elección: " << endl;
+
+	// Pedir origen
+	int origen = 3;
+	while (origen > 2 || origen < 0) {
+		cout << endl << "Ingrese la opción del origen que deben tener el/los servicio/s a mostrar: " << endl
+			<< "1- Mar del Plata" << endl
+			<< "2- Buenos Aires" << endl
+			<< "IMPORTANTE!: Si desea no filtrar por origen ingrese 0" << endl
+			<< endl << "Ingrese una opción: ";
+		cin >> origen;
+	}
+
+	// Pedir turno
+	int turno = 4;
+	while (turno > 3 || turno < 0) {
+		cout << endl << "Ingrese la opción del turno que deben tener el/los servicio/s a mostrar: " << endl
+			<< "1- Mañana" << endl
+			<< "2- Tarde" << endl
+			<< "3- Noche" << endl
+			<< "IMPORTANTE!: Si desea no filtrar por turno ingrese 0" << endl
+			<< endl << "Ingrese una opción: ";
+		cin >> turno;
+	}
+
+	// Pedir fecha
+	int dia = 32;
+	int mes = 0;
+	int anio = 0;
+	cout << endl << "Ingrese fecha del turno que deben tener el/los servicio/s a mostrar." << endl
+		<< "IMPORTANTE!: Si desea no filtrar por fecha ingrese 0" << endl;
+	bool ignorarFecha = false;
+	while (dia < 1 || dia>31) {
+		cout << "Ingrese el día (ej: 11): ";
+		cin >> dia;
+		if (dia == 0)
+			ignorarFecha = true;
+	}
+	if (!ignorarFecha) {
+		while (mes < 1 || mes>12) {
+			cout << "Ingrese el mes (ej: Enero sería 1): ";
+			cin >> mes;
+		}
+		while (anio < 1900 || anio>2500) {
+			cout << "Ingrese el año (ej: 2020): ";
+			cin >> anio;
+		}
+	}
+	
+	// Preparar datos en string
+	stringstream servicioS;
+	// Origen
+	switch (origen) {
+	case 0:
+		servicioS << ";";
+		break;
+	case 1:
+		servicioS << "m;";
+		break;
+	case 2:
+		servicioS << "b;";
+		break;
+	}
+	// Turno
+	switch (turno) {
+	case 0:
+		servicioS << ";";
+		break;
+	case 1:
+		servicioS << "m;";
+		break;
+	case 2:
+		servicioS << "t;";
+		break;
+	case 3:
+		servicioS << "n;";
+		break;
+	}
+	// Fecha
+	string filtro;
+	if (dia != 0) {
+		stringstream dato;
+		dato << std::setfill('0') << std::setw(2) << dia
+			<< std::setfill('0') << std::setw(2) << mes
+			<< anio << ";";
+		string fecha;
+		dato >> fecha;
+		servicioS << fecha;
+	} else
+		servicioS << ";";
+	servicioS >> filtro;
+
+	// Traer servicios filtrados por string
+	system("cls");
+	cout << "Servicios encontrados en base su filtro: " << endl << endl;
+	traerServicio(filtro);
+
+	cout << endl;
+	system("pause");
 }
