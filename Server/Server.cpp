@@ -162,7 +162,6 @@ void leerServicios() {
 void serverLog(string mensaje)
 {
 	fstream file;
-	/*cout << mensaje.c_str();*/
 
 	file.open("Log/server.log", ios::app | ios::out);
 
@@ -171,7 +170,6 @@ void serverLog(string mensaje)
 		exit(1);
 	}
 
-	/*file << "------------------------------------------------" << endl;*/
 	file << getFechaHoraActual() << "--->" << mensaje.c_str() << endl;
 }
 
@@ -179,7 +177,7 @@ bool validarServicio(char* texto) {
 	bool resultado = false;
 	ifstream archivo("infoServicios.bin", ifstream::binary);
 	if (archivo) {
-		// get length of file:
+		// Traer el largo del archivo
 		archivo.seekg(0, archivo.end);
 		streamoff length = archivo.tellg();
 		archivo.seekg(0, archivo.beg);
@@ -188,7 +186,7 @@ bool validarServicio(char* texto) {
 		streamoff longitud1 = length;
 		size_t longitud2 = strlen(texto);
 
-		// read data as a block:
+		// Leer el archivo completo
 		char c;
 		archivo.read(buffer, length);
 		if (archivo) {
@@ -393,6 +391,7 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			if (comando == "cerrarSesion")
 			{
 				desconectado = true;
+				estadoCliente = "deslogueado";
 			}
 			else if (comando == "altaServicio") {
 				bool value = altaServicio(mensaje);
