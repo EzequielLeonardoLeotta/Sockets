@@ -17,7 +17,7 @@ void menu();
 void alta();
 void mostrarTodo();
 void mostrarFiltrado();
-bool validarServicio(string &filtro);
+bool validarServicio(string filtro);
 
 int main() {
 	// Caracteres en español
@@ -34,7 +34,7 @@ void escribirAlArchivo(string &texto) {
 	archivo.open("../Server/infoServicios.bin", ofstream::binary | ofstream::app);
 
 	if (archivo) {
-		archivo.write(texto.c_str(), texto.size());
+		archivo.write(texto.c_str(), 74);
 		archivo.close();
 	}
 }
@@ -356,7 +356,7 @@ void alta() {
 	}
 	else 
 		cout << endl << "Error: ya existe un servicio con los datos ingresados, intentelo nuevamente con otros valores" << endl << endl;
-	
+
 	system("pause");
 }
 
@@ -474,8 +474,8 @@ void mostrarFiltrado() {
 	system("pause");
 }
 
-bool validarServicio(string &filtro) {
-	bool resultado = false;
+bool validarServicio(string filtro) {
+	bool encontrado = false;
 	ifstream archivo("../Server/infoServicios.bin", ifstream::binary);
 	if (archivo) {
 		// Leer un registro del archivo
@@ -495,30 +495,27 @@ bool validarServicio(string &filtro) {
 		fechaFiltro = filtro.substr(0, filtro.find(";"));
 
 		// Mientras no sea el fin de archivo mostrar el registro
-		while (!finArchivo) {
+		while (!finArchivo&&!encontrado) {
 			archivo.get(registro, largoRegistro);
 			if (archivo) {
 				// Pasar el registro de char[] a string
 				string servicio(registro);
-				string temporal(registro);
 
 				// Partir el registro en campos
-				origen = temporal.substr(0, temporal.find(";"));
-				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
-				turno = temporal.substr(0, temporal.find(";"));
-				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
-				fecha = temporal.substr(0, temporal.find(";"));
+				origen = servicio.substr(0, servicio.find(";"));
+				servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+				turno = servicio.substr(0, servicio.find(";"));
+				servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+				fecha = servicio.substr(0, servicio.find(";"));
 
 				// Comparar strings
 				if (origen == origenFiltro && turno == turnoFiltro && fecha == fechaFiltro)
-					resultado = true;
-
+					encontrado = true;
 			}
 			else
 				finArchivo = true;
 		}
 		archivo.close();
 	}
-
-	return resultado;
+	return encontrado;
 }
