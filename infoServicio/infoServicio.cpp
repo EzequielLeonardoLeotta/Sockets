@@ -12,7 +12,7 @@ bool findTexto(char* texto);
 void traerServicio();
 void traerServicio(string &filtro);
 void mostrarAsientos(string &asientos);
-void mostrarServicio(string &servicio);
+void mostrarServicio(string servicio);
 void menu();
 void alta();
 void mostrarTodo();
@@ -156,9 +156,6 @@ void traerServicio(string &filtro) {
 }
 
 void mostrarAsientos(string &asientos) {
-	/*cout << "Tamaño string: " << asientos.size() << endl;
-	cout << "String: " << asientos << endl;*/
-
 	// Columnas
 	cout << "Asientos:" << endl
 		<< "   | ";
@@ -195,7 +192,7 @@ void mostrarAsientos(string &asientos) {
 	cout << endl << endl;
 }
 
-void mostrarServicio(string &servicio) {
+void mostrarServicio(string servicio) {
 	// Partir el registro en campos
 	string delimitador = ";";
 	string origen = servicio.substr(0, servicio.find(";"));

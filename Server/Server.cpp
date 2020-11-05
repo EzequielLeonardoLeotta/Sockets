@@ -7,7 +7,8 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-#include <vector>
+//#include <vector>
+#include <iomanip>
 
 #pragma comment (lib, "ws2_32.lib")
 
@@ -21,9 +22,10 @@ bool altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
 void archivarLogCliente(string mensaje);
-bool validarServicio(char* texto);
+bool validarServicio(string mensaje);
 string getFechaHoraActual();
 void verRegistroDeActividades(SOCKET& clientSocket);
+void escribirAlArchivo(string& texto);
 
 //Variables globales
 string usuarioCliente;
@@ -173,76 +175,63 @@ void serverLog(string mensaje)
 	file << getFechaHoraActual() << "--->" << mensaje.c_str() << endl;
 }
 
-bool validarServicio(char* texto) {
-	bool resultado = false;
-	ifstream archivo("infoServicios.bin", ifstream::binary);
+bool validarServicio(string filtro) {
+	bool encontrado = false;
+	ifstream archivo("../Server/infoServicios.bin", ifstream::binary);
 	if (archivo) {
-		// Traer el largo del archivo
-		archivo.seekg(0, archivo.end);
-		streamoff length = archivo.tellg();
-		archivo.seekg(0, archivo.beg);
+		// Leer un registro del archivo
+		bool finArchivo = false;
+		streamoff largoRegistro = 75;
+		char registro[75];
 
-		char* buffer = new char[length]; // buffer = toda la info del archivo
-		streamoff longitud1 = length;
-		size_t longitud2 = strlen(texto);
+		string origenFiltro, turnoFiltro, fechaFiltro, origen, turno, fecha;
 
-		// Leer el archivo completo
-		char c;
-		archivo.read(buffer, length);
-		if (archivo) {
-			// Procesar buffer
-			c = texto[0];
-			for (int i = 0; i < length; i++) {
-				if (buffer[i] == c) {
-					if (strncmp(&buffer[i], texto, longitud2) == 0) {
-						resultado = true;
-					}
-				}
+		string delimitador = ";";
+
+		// Partir el filtro en campos
+		origenFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		turnoFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		fechaFiltro = filtro.substr(0, filtro.find(";"));
+
+		// Mientras no sea el fin de archivo mostrar el registro
+		while (!finArchivo && !encontrado) {
+			archivo.get(registro, largoRegistro);
+			if (archivo) {
+				// Pasar el registro de char[] a string
+				string servicio(registro);
+
+				// Partir el registro en campos
+				origen = servicio.substr(0, servicio.find(";"));
+				servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+				turno = servicio.substr(0, servicio.find(";"));
+				servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+				fecha = servicio.substr(0, servicio.find(";"));
+
+				// Comparar strings
+				if (origen == origenFiltro && turno == turnoFiltro && fecha == fechaFiltro)
+					encontrado = true;
 			}
+			else
+				finArchivo = true;
 		}
-		else
-			cout << "Error al acceder al archivo infoServicios.bin" << endl;
 		archivo.close();
-		// liberar memoria del buffer
-		delete[] buffer;
 	}
-	return resultado;
+	return encontrado;
 }
 
 bool altaServicio(string mensaje) {
-	size_t largo = strnlen(mensaje.c_str(), mensaje.length());
-	char d[100] = "";
-	char* prueba = d;
-	strcpy(prueba, mensaje.c_str());
-	string butacas = "00000000000000000000000000000000000000000000000000000000;";
-	string init = mensaje + butacas;
-	fstream f;
-	bool value=false;
-	f.open("infoServicios.bin", ios::app | ios::binary);
+	bool respuesta = false;
+	if (!validarServicio(mensaje)) {
+		// Agregar el servicio al archivo
+		escribirAlArchivo(mensaje);
+		archivarLogCliente(mensaje + " - AltaServicio");
 
-	if (f) {
-		size_t largo = strnlen(init.c_str(), init.length());
-
-		bool flag = validarServicio(prueba);
-		if (flag != true) {
-			for (int i = 0; i < largo; i++) {
-				f.put(init[i]);
-			}
-			archivarLogCliente(mensaje + " - AltaServicio");
-			
-			value = true;
-			//return value;
-		}
-		else {
-			cout << "no se puede dar de alta" << endl;
-			value = false;
-			//return value;
-		}
-		
+		respuesta = true;
 	}
-	f.close();
-	cout << "VALOR DEl ALTA"<<value;
-	return value;
+
+	return respuesta;
 }
 
 bool validarLogin(string& mensaje) {
@@ -379,33 +368,34 @@ void atenderPeticiones(SOCKET& clientSocket) {
 			cout << "Mensaje recibido: " << peticion << endl;
 
 			// Procesar la petición dependiendo del tipo de comando que llegó
-			size_t delimitador = peticion.find(';');
-			string comando = peticion.substr(0, delimitador);
-			// Peticion sin comando 
-			string mensaje = peticion.substr(delimitador).replace(0, 1, "");
+			string delimitador = ";";
 
-			// Atender altaServicio
-			
+			// Quitarle el comando al mensaje
+			string comando = peticion.substr(0, peticion.find(";"));
+			peticion.erase(0, peticion.find(delimitador) + delimitador.length());
 
-			// Enviar respuesta
+			// Atender si no se recibe el cierre de sesión
 			if (comando == "cerrarSesion")
 			{
 				desconectado = true;
 				estadoCliente = "deslogueado";
 			}
-			else if (comando == "altaServicio") {
-				bool value = altaServicio(mensaje);
-				if (value) {
+
+			// Atender altaServicio
+			if (comando == "altaServicio" && !desconectado) {
+				if (altaServicio(peticion)) 
 					respuesta = "altaOk";
-					enviarMensaje(respuesta, clientSocket);
-				}
-				else {
+				else 
 					respuesta = "altaNegada";
-					enviarMensaje(respuesta, clientSocket);
-				}
 			}
-			else if (comando == "verRegistro")
+
+			// Atender verRegistro
+			if (comando == "verRegistro" && !desconectado)
 				verRegistroDeActividades(clientSocket);
+
+			// Enviar respuesta
+			if (!desconectado)
+				enviarMensaje(respuesta, clientSocket);
 		}
 	}
 }
@@ -416,7 +406,7 @@ void archivarLogCliente(string mensaje)
 
 	if (archivo.is_open())
 	{
-		archivo << getFechaHoraActual() + " " + mensaje + "\n";
+		archivo << getFechaHoraActual() + "--->" + mensaje + "\n";
 		archivo.close();
 	}
 	else
@@ -438,7 +428,21 @@ string getFechaHoraActual()
 	minutos = today.tm_min;
 	segundos = today.tm_sec;
 
-	return to_string(dia) + "/" + to_string(mes) + "/" + to_string(ano) + "__" + to_string(hora) + ":" + to_string(minutos) + ":" + to_string(segundos);
+	stringstream fechaS;
+	fechaS << std::setfill('0') << std::setw(2) << dia
+		<< "/"
+		<< std::setfill('0') << std::setw(2) << mes
+		<< "/"
+		<< ano << "__"
+		<< std::setfill('0') << std::setw(2) << hora
+		<< ":"
+		<< std::setfill('0') << std::setw(2) << minutos
+		<< ":"
+		<< std::setfill('0') << std::setw(2) << segundos;
+	string fechaHora;
+	fechaS >> fechaHora;
+
+	return fechaHora;
 }
 
 void verRegistroDeActividades(SOCKET& clientSocket)
@@ -457,5 +461,15 @@ void verRegistroDeActividades(SOCKET& clientSocket)
 	{
 		cout << "Error al abrir el archivo";
 		EXIT_FAILURE;
+	}
+}
+
+void escribirAlArchivo(string& texto) {
+	ofstream archivo;
+	archivo.open("infoServicios.bin", ofstream::binary | ofstream::app);
+
+	if (archivo) {
+		archivo.write(texto.c_str(), 74);
+		archivo.close();
 	}
 }
