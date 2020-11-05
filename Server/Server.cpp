@@ -135,7 +135,6 @@ int main()
 			archivarLogCliente(log);
 			serverLog(log);
 			estadoCliente = "deslogueado";
-			cout << log << endl;
 		}
 
 		// Apagar el socket antes de cerrarlo
