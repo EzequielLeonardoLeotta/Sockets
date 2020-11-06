@@ -26,6 +26,9 @@ bool validarServicio(string mensaje);
 string getFechaHoraActual();
 void verRegistroDeActividades(SOCKET& clientSocket);
 void escribirAlArchivo(string& texto);
+void traerServicios(string filtro, SOCKET &clientSocket);
+string recibirMensaje(SOCKET& clientSocket);
+void reservarAsiento(string peticion, SOCKET& clientSocket);
 
 //Variables globales
 string usuarioCliente;
@@ -382,19 +385,30 @@ void atenderPeticiones(SOCKET& clientSocket) {
 
 			// Atender altaServicio
 			if (comando == "altaServicio" && !desconectado) {
-				if (altaServicio(peticion)) 
-					respuesta = "altaOk";
-				else 
+				if (altaServicio(peticion)) {
+					respuesta = "altaOk"; 
+					enviarMensaje(respuesta, clientSocket);
+				}
+				else {
 					respuesta = "altaNegada";
+					enviarMensaje(respuesta, clientSocket);
+				}
 			}
 
+			// Atender reservarAsiento
+			if (comando == "reservarAsiento" && !desconectado) {
+				reservarAsiento(peticion, clientSocket);
+			}
+
+			// Atender traerServicios (devuelve de a uno los servicios que combinan 
+			// con el filtro, por ultimo envia "finLista")
+			if (comando == "traerServicios" && !desconectado) 
+				traerServicios(peticion, clientSocket);
+			
 			// Atender verRegistro
 			if (comando == "verRegistro" && !desconectado)
 				verRegistroDeActividades(clientSocket);
 
-			// Enviar respuesta
-			if (!desconectado)
-				enviarMensaje(respuesta, clientSocket);
 		}
 	}
 }
@@ -471,4 +485,179 @@ void escribirAlArchivo(string& texto) {
 		archivo.write(texto.c_str(), 74);
 		archivo.close();
 	}
+}
+
+void traerServicios(string filtro, SOCKET& clientSocket) {
+	ifstream archivo("infoServicios.bin", ifstream::binary);
+	if (archivo) {
+		// Leer un registro del archivo
+		bool finArchivo = false;
+		streamoff largoRegistro = 75;
+		char registro[75];
+		string origenFiltro, turnoFiltro, fechaFiltro, origen, turno, fecha;
+		string delimitador = ";";
+		int serviciosEncontrados = 0;
+
+		// Partir el filtro en campos
+		origenFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		turnoFiltro = filtro.substr(0, filtro.find(";"));
+		filtro.erase(0, filtro.find(delimitador) + delimitador.length());
+		fechaFiltro = filtro.substr(0, filtro.find(";"));
+
+		// Mientras no sea el fin de archivo mostrar el registro
+		while (!finArchivo) {
+			archivo.get(registro, largoRegistro);
+			if (archivo) {
+				// Pasar el registro de char[] a string
+				string servicio(registro);
+				string temporal(registro);
+
+				// Partir el registro en campos
+				origen = temporal.substr(0, temporal.find(";"));
+				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+				turno = temporal.substr(0, temporal.find(";"));
+				temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+				fecha = temporal.substr(0, temporal.find(";"));
+
+				// Comparar strings
+				if (origen == origenFiltro || origenFiltro == "") {
+					if (turno == turnoFiltro || turnoFiltro == "") {
+						if (fecha == fechaFiltro || fechaFiltro == "") {
+							// Enviar servicio al cliente y recibir OK
+							serviciosEncontrados++;
+							enviarMensaje(servicio, clientSocket);
+							if (recibirMensaje(clientSocket) != "recibido") {
+								break;
+							}
+						}
+					}
+				}
+
+			}
+			else
+				finArchivo = true;
+		}
+		archivo.close();
+
+		string mensaje;
+		// Si no se encontró ningun servicio avisarle al cliente
+		if (serviciosEncontrados == 0) {
+			mensaje = "noEncontrado";
+			enviarMensaje(mensaje, clientSocket);
+		}
+		else {
+			mensaje = "finLista";
+			enviarMensaje(mensaje, clientSocket);
+		}
+	}
+	else
+		std::cout << endl << "Error: no se pudo abrir el archivo infoServicios.bin" << endl;
+}
+
+string recibirMensaje(SOCKET& clientSocket) {
+	int iResultado;
+	char bufer[4096];
+	string respuesta = "";
+
+	// Recibir hasta que el servidor corte la conexion
+	iResultado = recv(clientSocket, bufer, 4096, 0);
+
+	respuesta.assign(bufer);
+
+	return respuesta;
+}
+
+void reservarAsiento(string peticion, SOCKET& clientSocket) {
+	// Partir peticion en fila, columna y servicio (origen, turno, fecha)
+	string delimitador = ";";
+	string fila = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string columna = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string origen = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string turno = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string fecha = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string servicio = origen + ";" + turno + ";" + fecha + ";";
+
+	// Procesar fila y columna, generar posición del string de asientos del servicio
+	int posicion = 0;
+	if (fila == "A") {
+		posicion--;
+	}
+	else if (fila == "B") {
+		posicion += 19;
+	}
+	else if (fila == "C") {
+		posicion += 39;
+	}
+	posicion += stoi(columna);
+
+	string respuesta;
+	// Buscar el servicio en el archivo infoServicios
+	if (validarServicio(servicio)) {
+		// Si existe...
+		// Abrir archivo infoServicios y un archivo temporal
+		ifstream archivo("infoServicios.bin", ifstream::binary);
+		ofstream archivoTemporal("temporal.bin", ofstream::binary | ofstream::app);
+		if (archivo && archivoTemporal) {
+			// Leer un registro del archivo
+			bool finArchivo = false;
+			streamoff largoRegistro = 75;
+			char registro[75];
+			string origenTemporal, turnoTemporal, fechaTemporal, asientosTemporal;
+			int serviciosEncontrados = 0;
+
+			// Mientras no sea el fin de archivo leer registro
+			while (!finArchivo) {
+				archivo.get(registro, largoRegistro);
+				if (archivo) {
+					// Guardar el registro leido sin modificar
+					string servicio(registro);
+
+					// Pasar el registro de char[] a string
+					string temporal(registro);
+
+					// Partir el registro leido en campos
+					origenTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					turnoTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					fechaTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					asientosTemporal = temporal.substr(0, temporal.find(";"));
+
+					// Si el servicio leido es el que buscaba
+					if (origen == origenTemporal && turno == turnoTemporal && fecha == fechaTemporal) {
+						// Modificar servicio con los datos correspondientes
+						asientosTemporal[posicion] = 'x';
+						servicio = origenTemporal + ";" + turnoTemporal + ";" + fechaTemporal + ";" + asientosTemporal + ";";
+					}
+					archivoTemporal.write(servicio.c_str(), 74);
+				}
+				else
+					finArchivo = true;
+			}
+			archivo.close();
+			archivoTemporal.close();
+
+			// Eliminar infoServicios.bin
+			remove("infoServicios.bin");
+			// Renombrar temporal.bin como infoServicios.bin
+			if (rename("temporal.bin", "infoServicios.bin") == 0) {
+				// Si no hubo problemas responderle OK al cliente
+				respuesta = "reservaOK";
+			}
+		}
+		else
+			respuesta = "reservaError";
+	}
+	else 
+		respuesta = "reservaError";
+
+	// Enviar respuesta al cliente
+	enviarMensaje(respuesta, clientSocket);
 }
