@@ -113,15 +113,13 @@ int main()
 
 				respuesta = recibirMensaje(sock);
 				if(respuesta=="login"){
-					cout << "Error: Usuario o contraseña incorrectos" << endl << endl;
-					system("pause");
+					cout << endl << "Error: Usuario o contraseña incorrectos" << endl;
 				}
 				
 			}
 
 			if (respuesta == "excesoDeIntentos") {
-				cout << "Error: Se superó la cantidad máxima de intentos de ingreso" << endl << endl;
-				system("pause");
+				cout << endl << "Error: Se superó la cantidad máxima de intentos de ingreso" << endl;
 			}
 			else {
 				// Entrar al menú principal
@@ -243,6 +241,7 @@ void altaServicio(SOCKET& sock) {
 			// Mostrar el servicio
 			mostrarServicio(alta, true);
 
+			cout << endl;
 			system("pause");
 		}
 

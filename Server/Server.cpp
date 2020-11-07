@@ -17,7 +17,7 @@ using namespace std;
 //Declaraciones
 bool validarLogin(string& mensaje);
 int enviarMensaje(string& mensaje, SOCKET& sock);
-void login(SOCKET& clientSocket);
+void login(SOCKET& clientSocket, string host, string puerto);
 bool altaServicio(string mensaje);
 void atenderPeticiones(SOCKET& clientSocket);
 void serverLog(string mensaje);
@@ -128,16 +128,15 @@ int main()
 		setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)& timeout, sizeof(timeout));
 
 		// Enviar pedido de usuario y contraseña
-		login(clientSocket);
+		login(clientSocket, (string)host, service);
 
 		if (estadoCliente == "logueado") {
 			// Atender peticiones del cliente hasta que se desconecte
 			atenderPeticiones(clientSocket);
 
 			// Loguear el cierre de sesión
-			string log = "Usuario " + usuarioCliente + " cierra sesión";
-			archivarLogCliente(log);
-			serverLog(log);
+			archivarLogCliente("Cierra sesión");
+			serverLog("Usuario (" + usuarioCliente + ") cierra sesión");
 			estadoCliente = "deslogueado";
 		}
 
@@ -149,7 +148,8 @@ int main()
 
 		// Cerrar el socket
 		closesocket(clientSocket);
-		serverLog("Conexion terminada con cliente: " + (string)host + ": " + service);
+		serverLog("Conexión terminada con cliente: " + (string)host + ": " + service);
+
 		cout << endl;
 
 		// Limpiar Winsock
@@ -160,10 +160,6 @@ int main()
 }
 
 // Implementaciones
-void leerServicios() {
-
-}
-
 void serverLog(string mensaje)
 {
 	fstream file;
@@ -229,7 +225,7 @@ bool altaServicio(string mensaje) {
 	if (!validarServicio(mensaje)) {
 		// Agregar el servicio al archivo
 		escribirAlArchivo(mensaje);
-		archivarLogCliente(mensaje + " - AltaServicio");
+		archivarLogCliente("AltaServicio_");
 
 		respuesta = true;
 	}
@@ -283,7 +279,7 @@ int enviarMensaje(string& mensaje, SOCKET& sock) {
 	return iResult;
 }
 
-void login(SOCKET& clientSocket) {
+void login(SOCKET& clientSocket, string host, string puerto) {
 	bool logueado = false;
 	bool timeoutCliente = false;
 	bool error = false;
@@ -320,9 +316,12 @@ void login(SOCKET& clientSocket) {
 		if (validarLogin(respuesta)&&!timeoutCliente) {
 			mensaje = "loginOK";
 			estadoCliente = "logueado";
-			string log = "Usuario " + usuarioCliente + " inicia sesión";
-			archivarLogCliente(log);
-			serverLog(log);
+			// Guardar el inicio de sesión en el log del usuario
+			archivarLogCliente("=================================");
+			archivarLogCliente("           Inicia sesión         ");
+			archivarLogCliente("=================================");
+			// Guardar en el log del servidor el inicio de sesión con nombre de usuario
+			serverLog("Usuario (" + usuarioCliente + ") inicia sesión");
 			logueado = true;
 		}
 		else {
@@ -330,6 +329,9 @@ void login(SOCKET& clientSocket) {
 			// Si llegué a 3 intentos tirar error
 			if (intentos == 3) {
 				mensaje = "excesoDeIntentos";
+				// Loguear exceso de intentos del host
+				string log = "Exceso de intentos de login, cliente: " + (string)host + " : " + puerto;
+				serverLog(log);
 			}
 		}
 
@@ -656,6 +658,9 @@ void reservarAsiento(string peticion, SOCKET& clientSocket) {
 			if (rename("temporal.bin", "infoServicios.bin") == 0) {
 				// Si no hubo problemas responderle OK al cliente
 				respuesta = "reservaOK";
+				// Loguear en archivo usuario la reserva
+				string log = "Reserva_" + fila + columna;
+				archivarLogCliente(log);
 			}
 		}
 		else
@@ -750,6 +755,9 @@ void liberarAsiento(string peticion, SOCKET& clientSocket) {
 			if (rename("temporal.bin", "infoServicios.bin") == 0) {
 				// Si no hubo problemas responderle OK al cliente
 				respuesta = "liberarOK";
+				// Loguear en archivo usuario la liberacion
+				string log = "Libera_" + fila + columna;
+				archivarLogCliente(log);
 			}
 		}
 		else
