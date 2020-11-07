@@ -471,12 +471,15 @@ void verRegistroDeActividades(SOCKET& clientSocket)
 	string linea;
 	ifstream archivo("Log/Clientes/" + usuarioCliente + ".txt");
 	if (archivo){
-		while (getline(archivo, linea))
+		while (getline(archivo, linea)) {
 			enviarMensaje(linea, clientSocket);
+		}
 		archivo.close();
+		linea = "finLog";
+		enviarMensaje(linea, clientSocket);
 	}
 	else {
-		cout << endl << "Error al abrir el archivo" << endl;
+		cout << endl << "Error al abrir el archivo de log del usuario: " << usuarioCliente << endl;
 	}
 }
 

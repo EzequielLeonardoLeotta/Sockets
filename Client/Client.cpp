@@ -435,14 +435,17 @@ void verRegistro(SOCKET& sock) {
 	cout << "Ver registro de actividades" << endl << endl;
 
 	string verRegistro = "verRegistro;";
-	string respuesta;
+	string mensaje="";
 
 	if (enviarMensaje(verRegistro, sock) != 1) {
-		while (recibirMensaje(sock) != "")
-			cout << recibirMensaje(sock) << endl;
+		while (mensaje != "finLog") {
+			mensaje = recibirMensaje(sock);
+			if (mensaje != "finLog") 
+				cout << mensaje << endl;			
+		}
 	}
 	else 
-		cout << endl << "Error al enviar mensaje" << endl;
+		cout << endl << "Error al enviar el pedido del registro" << endl;
 
 	cout << endl;
 	system("pause");
