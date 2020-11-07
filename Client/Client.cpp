@@ -432,20 +432,19 @@ void gestionPasaje(SOCKET& sock) {
 
 void verRegistro(SOCKET& sock) {
 	system("cls");
+	cout << "Ver registro de actividades" << endl << endl;
+
 	string verRegistro = "verRegistro;";
 	string respuesta;
 
 	if (enviarMensaje(verRegistro, sock) != 1) {
-		cout << "Ver registro de actividades" << endl;
 		while (recibirMensaje(sock) != "")
-		{
 			cout << recibirMensaje(sock) << endl;
-		}
 	}
-	else {
-		cout << "Error al enviar mensaje";
-	}
+	else 
+		cout << endl << "Error al enviar mensaje" << endl;
 
+	cout << endl;
 	system("pause");
 }
 
