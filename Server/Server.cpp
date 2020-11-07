@@ -29,6 +29,7 @@ void escribirAlArchivo(string& texto);
 void traerServicios(string filtro, SOCKET &clientSocket);
 string recibirMensaje(SOCKET& clientSocket);
 void reservarAsiento(string peticion, SOCKET& clientSocket);
+void liberarAsiento(string peticion, SOCKET& clientSocket);
 
 //Variables globales
 string usuarioCliente;
@@ -400,6 +401,11 @@ void atenderPeticiones(SOCKET& clientSocket) {
 				reservarAsiento(peticion, clientSocket);
 			}
 
+			// Atender liberarAsiento
+			if (comando == "liberarAsiento" && !desconectado) {
+				liberarAsiento(peticion, clientSocket);
+			}
+
 			// Atender traerServicios (devuelve de a uno los servicios que combinan 
 			// con el filtro, por ultimo envia "finLista")
 			if (comando == "traerServicios" && !desconectado) 
@@ -657,6 +663,100 @@ void reservarAsiento(string peticion, SOCKET& clientSocket) {
 	}
 	else 
 		respuesta = "reservaError";
+
+	// Enviar respuesta al cliente
+	enviarMensaje(respuesta, clientSocket);
+}
+
+void liberarAsiento(string peticion, SOCKET& clientSocket) {
+	// Partir peticion en fila, columna y servicio (origen, turno, fecha)
+	string delimitador = ";";
+	string fila = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string columna = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string origen = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string turno = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string fecha = peticion.substr(0, peticion.find(";"));
+	peticion.erase(0, peticion.find(delimitador) + delimitador.length());
+	string servicio = origen + ";" + turno + ";" + fecha + ";";
+
+	// Procesar fila y columna, generar posición del string de asientos del servicio
+	int posicion = 0;
+	if (fila == "A") {
+		posicion--;
+	}
+	else if (fila == "B") {
+		posicion += 19;
+	}
+	else if (fila == "C") {
+		posicion += 39;
+	}
+	posicion += stoi(columna);
+
+	string respuesta;
+	// Buscar el servicio en el archivo infoServicios
+	if (validarServicio(servicio)) {
+		// Si existe...
+		// Abrir archivo infoServicios y un archivo temporal
+		ifstream archivo("infoServicios.bin", ifstream::binary);
+		ofstream archivoTemporal("temporal.bin", ofstream::binary | ofstream::app);
+		if (archivo && archivoTemporal) {
+			// Leer un registro del archivo
+			bool finArchivo = false;
+			streamoff largoRegistro = 75;
+			char registro[75];
+			string origenTemporal, turnoTemporal, fechaTemporal, asientosTemporal;
+			int serviciosEncontrados = 0;
+
+			// Mientras no sea el fin de archivo leer registro
+			while (!finArchivo) {
+				archivo.get(registro, largoRegistro);
+				if (archivo) {
+					// Guardar el registro leido sin modificar
+					string servicio(registro);
+
+					// Pasar el registro de char[] a string
+					string temporal(registro);
+
+					// Partir el registro leido en campos
+					origenTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					turnoTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					fechaTemporal = temporal.substr(0, temporal.find(";"));
+					temporal.erase(0, temporal.find(delimitador) + delimitador.length());
+					asientosTemporal = temporal.substr(0, temporal.find(";"));
+
+					// Si el servicio leido es el que buscaba
+					if (origen == origenTemporal && turno == turnoTemporal && fecha == fechaTemporal) {
+						// Modificar servicio con los datos correspondientes
+						asientosTemporal[posicion] = 'o';
+						servicio = origenTemporal + ";" + turnoTemporal + ";" + fechaTemporal + ";" + asientosTemporal + ";";
+					}
+					archivoTemporal.write(servicio.c_str(), 74);
+				}
+				else
+					finArchivo = true;
+			}
+			archivo.close();
+			archivoTemporal.close();
+
+			// Eliminar infoServicios.bin
+			remove("infoServicios.bin");
+			// Renombrar temporal.bin como infoServicios.bin
+			if (rename("temporal.bin", "infoServicios.bin") == 0) {
+				// Si no hubo problemas responderle OK al cliente
+				respuesta = "liberarOK";
+			}
+		}
+		else
+			respuesta = "liberarError";
+	}
+	else
+		respuesta = "liberarError";
 
 	// Enviar respuesta al cliente
 	enviarMensaje(respuesta, clientSocket);

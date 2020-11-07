@@ -411,7 +411,7 @@ void gestionPasaje(SOCKET& sock) {
 		// Si se mostraron servicios ofrecer reservar pasaje y alta servicio
 		cout << endl << "Que desea hacer?: " << endl;
 		while (opcion < 1 || opcion>3) {
-			cout << endl << "1- Reservar pasajes" << endl
+			cout << endl << "1- Reservar o liberar pasajes" << endl
 				<< "2- Alta servicio" << endl
 				<< "3- Volver al menú principal" << endl
 				<< endl << "Ingrese una opción: ";
@@ -552,7 +552,7 @@ void mostrarAsientos(string& asientos) {
 
 	cout << endl << endl
 		<< "o = Asiento libre" << endl
-		<< "x = Asiento ocupado" << endl << endl;
+		<< "x = Asiento ocupado" << endl;
 }
 
 void mostrarServicio(string servicio, bool ocupacion) {
@@ -597,7 +597,7 @@ void modificarServicio(SOCKET& sock, list<string> lista) {
 	int idServicio=0;
 	// Antes de limpiar la pantalla pedir el numero de servicio que se mostró
 	while (idServicio < 1 || idServicio > lista.size()) {
-		cout << endl << "Por favor ingrese el numero del servicio en el cual desea realizar una reserva: ";
+		cout << endl << "Por favor ingrese el numero del servicio el cual desea modificar: ";
 		cin >> idServicio;
 	}
 
@@ -624,10 +624,6 @@ void modificarServicio(SOCKET& sock, list<string> lista) {
 		case 1:
 			// Reservar asiento 
 			reservarAsiento(sock, servicio);
-			// Pedir al usuario que elija un asiento
-			// Mientras elija un asiento ocupado volver a pedirlo
-			// Si el asiento es valido enviar la petición de reserva al servidor
-			// Recibir respuesta del servidor e informarlo por pantalla
 			break;
 		case 2:
 			// Liberar asiento
@@ -737,7 +733,95 @@ void reservarAsiento(SOCKET &sock, string servicio) {
 }
 
 void liberarAsiento(SOCKET& sock, string servicio) {
+	system("cls");
+	cout << "Liberar un asiento" << endl << endl;
+	mostrarServicio(servicio, true);
 
+	cout << endl << "A continuación se le solicitará fila y columna del asiento a reservar según se muestra arriba" << endl;
+	// Pedir fila
+	int fila = 0;
+	while (fila < 1 || fila>3) {
+		cout << endl << "Fila:" << endl
+			<< "1- Fila A" << endl
+			<< "2- Fila B" << endl
+			<< "3- Fila C" << endl
+			<< "Ingrese una opción: ";
+		cin >> fila;
+	}
+	// Pedir columna
+	int columna = 0;
+	while (columna < 1 || columna>20) {
+		cout << endl << "Columna" << endl
+			<< "Ingrese el número de columna: ";
+		cin >> columna;
+	}
+
+	// Procesar fila y columna, generar posición del string de asientos del servicio
+	int posicion = 0;
+	string filaS;
+	switch (fila) {
+	case 1:
+		posicion--;
+		filaS = "A";
+		break;
+	case 2:
+		posicion += 19;
+		filaS = "B";
+		break;
+	case 3:
+		posicion += 39;
+		filaS = "C";
+		break;
+	}
+	posicion += columna;
+
+	// Partir el servicio en campos
+	string delimitador = ";";
+	string origen = servicio.substr(0, servicio.find(";"));
+	servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+	string turno = servicio.substr(0, servicio.find(";"));
+	servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+	string fecha = servicio.substr(0, servicio.find(";"));
+	servicio.erase(0, servicio.find(delimitador) + delimitador.length());
+	string asientos = servicio.substr(0, servicio.find(";"));
+
+	// Validar si el asiento indicado ya está libre (o)
+	if (asientos[posicion] != 'o') {
+		// Si no está libre ...
+
+		// Armar petición (reservarAsiento;fila;columna;origen;turno;fecha;)
+		stringstream mensajeS;
+		mensajeS << "liberarAsiento;"
+			// Agregar asiento
+			<< filaS << ";" << columna << ";"
+			// Agregar servicio
+			<< origen << ";"
+			<< turno << ";"
+			<< fecha << ";";
+
+		// Guardar peticion en string
+		string mensaje;
+		mensajeS >> mensaje;
+
+		// Enviar peticion de reserva al servidor
+		enviarMensaje(mensaje, sock);
+
+		// Procesar respuesta del servidor
+		string res = recibirMensaje(sock);
+		if (res == "liberarOK") {
+			cout << endl << "Se ha liberado el asiento " << filaS << "-" << columna << " correctamente." << endl;
+		}
+		else if (res == "liberarError") {
+			cout << endl << endl << "Error: No se pudo liberar el asiento " << fila << " " << columna << "." << endl;
+		}
+	}
+	else {
+		// Si está ocupado informar al usuario que no puede reservar un asiento ocupado 
+		cout << endl << "Error: el asiento " << filaS << "-" << columna << " ya está libre." << endl;
+	}
+
+	cout << endl;
+	system("pause");
 }
 
 void elegirOtroServicio(list<string> &lista) {
