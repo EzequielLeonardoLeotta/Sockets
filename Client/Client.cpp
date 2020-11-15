@@ -113,7 +113,8 @@ int main()
 
 				respuesta = recibirMensaje(sock);
 				if(respuesta=="login"){
-					cout << endl << "Error: Usuario o contraseña incorrectos" << endl;
+					cout << endl << "Error: Usuario o contraseña incorrectos" << endl << endl;
+					system("pause");
 				}
 				
 			}
@@ -256,7 +257,7 @@ void altaServicio(SOCKET& sock) {
 }
 
 void gestionPasaje(SOCKET& sock) {
-	system("cls");
+	std::system("cls");
 	cout << "Gestion de pasajes" << endl << endl;
 
 	// Pedir datos al usuario para filtrar
@@ -363,7 +364,7 @@ void gestionPasaje(SOCKET& sock) {
 	// Enviar la petición de servicios con el filtro
 	if (enviarMensaje(filtro, sock) != 1) {
 		// Recibir de a uno la lista de servicios
-		system("cls");
+		std::system("cls");
 		cout << "Servicios encontrados en base a su filtro: " << endl;
 		do {
 			res = recibirMensaje(sock);
@@ -388,12 +389,12 @@ void gestionPasaje(SOCKET& sock) {
 
 	if (res == "noEncontrado") {
 		// Si no se encontró ningun servicio ofrecer unicamente alta servicio
-		system("cls");
+		std::system("cls");
 		cout << "No se encontraron servicios que coincidan con los datos ingresados."
 			<< endl << endl << "Desea realizar una alta de servicio?: " << endl;
 		while (opcion < 1 || opcion>2) {
 			cout << endl << "1- Si, quiero crear un nuevo servicio" << endl
-				<< "2- No, quiero volver al menú principal" << endl
+				<< "2- No, quiero volver al menú anterior" << endl
 				<< endl << "Ingrese una opción: ";
 			cin >> opcion;
 		}
@@ -412,7 +413,7 @@ void gestionPasaje(SOCKET& sock) {
 		while (opcion < 1 || opcion>3) {
 			cout << endl << "1- Reservar o liberar pasajes" << endl
 				<< "2- Alta servicio" << endl
-				<< "3- Volver al menú principal" << endl
+				<< "3- Volver al menú anterior" << endl
 				<< endl << "Ingrese una opción: ";
 			cin >> opcion;
 		}
@@ -595,33 +596,36 @@ void mostrarServicio(string servicio, bool ocupacion) {
 }
 
 void modificarServicio(SOCKET& sock, list<string> lista) {
-	int idServicio=0;
+	int idServicio = 0;
 	// Antes de limpiar la pantalla pedir el numero de servicio que se mostró
 	while (idServicio < 1 || idServicio > lista.size()) {
 		cout << endl << "Por favor ingrese el numero del servicio el cual desea modificar: ";
 		cin >> idServicio;
 	}
 
-	// Si el numero de servicio es valido proceder al menú de reserva de pasaje
-	system("cls");
-	cout << "Modificar servicio" << endl << endl;
+	bool salir = false;
+	while (!salir) {
+		// Si el numero de servicio es valido proceder al menú de reserva de pasaje
+		std::system("cls");
+		cout << "Modificar servicio" << endl << endl;
 
-	// Mostrar el servicio seleccionado incluida la ocupación
-	string servicio = getServicio(lista, idServicio);
-	mostrarServicio(servicio, true);
+		// Mostrar el servicio seleccionado incluida la ocupación
+		idServicio--;
+		string servicio = getServicio(lista, idServicio);
+		mostrarServicio(servicio, true);
 
-	// Mostrar menú con opciones 
-	int opcion = 0;
-	while (opcion < 1 || opcion > 4) {
-		cout << endl << "1- Reservar asiento" << endl
-			<< "2- Liberar asiento" << endl
-			<< "3- Elegir otro servicio" << endl
-			<< "4- Volver al menú principal" << endl
-			<< endl << "Ingrese una opción: ";
-		cin >> opcion;
-	}
+		// Mostrar menú con opciones 
+		int opcion = 0;
+		while (opcion < 1 || opcion > 4) {
+			cout << endl << "1- Reservar asiento" << endl
+				<< "2- Liberar asiento" << endl
+				<< "3- Elegir otro servicio" << endl
+				<< "4- Volver al menú anterior" << endl
+				<< endl << "Ingrese una opción: ";
+			cin >> opcion;
+		}
 
-	switch (opcion) {
+		switch (opcion) {
 		case 1:
 			// Reservar asiento 
 			reservarAsiento(sock, servicio);
@@ -636,7 +640,9 @@ void modificarServicio(SOCKET& sock, list<string> lista) {
 			break;
 		case 4:
 			// Volver al menú anterior
+			salir = true;
 			break;
+		}
 	}
 }
 
@@ -738,6 +744,8 @@ void liberarAsiento(SOCKET& sock, string servicio) {
 	cout << "Liberar un asiento" << endl << endl;
 	mostrarServicio(servicio, true);
 
+	string servicioOriginal = servicio;
+
 	cout << endl << "A continuación se le solicitará fila y columna del asiento a reservar según se muestra arriba" << endl;
 	// Pedir fila
 	int fila = 0;
@@ -835,4 +843,40 @@ string getServicio(list<string> lista, int &pos) {
 		++it;
 	}
 	return *it;
+}
+
+string traerServicio(SOCKET& sock, string servicio) {
+	// Preparar datos en string
+	stringstream peticionS;
+	peticionS << "traerServicios;";
+	peticionS << servicio;
+
+	// String de petición
+	string filtro;
+	peticionS >> filtro;
+
+	list<string> listaServicios;
+
+	string res, mensaje;
+	// Enviar la petición de servicios con el filtro
+	if (enviarMensaje(filtro, sock) != 1) {
+		// Recibir de a uno la lista de servicios
+		do {
+			res = recibirMensaje(sock);
+			if (res != "finLista" && res != "noEncontrado") {
+				// Mostrar el servicio por pantalla, sin ocupación
+				listaServicios.push_back(res);
+
+				// Confirmar recepcion al servidor para que mande el siguiente
+				mensaje = "recibido";
+				enviarMensaje(mensaje, sock);
+			}
+		} while (res != "finLista" && res != "noEncontrado");
+	}
+	else
+		cout << endl << "Error al enviar petición de lista de servicios" << endl << endl;
+
+	int pos = 0;
+
+	return getServicio(listaServicios, pos);
 }

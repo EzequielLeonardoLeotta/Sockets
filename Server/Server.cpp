@@ -43,6 +43,13 @@ int main()
 	// Limpiar Winsock para evitar bugs al reactivar la libreria
 	WSACleanup();
 
+	// Pedir puerto por consola
+	int puerto = 0;
+	while (puerto < 5000 || puerto > 54000) {
+		cout << "Ingrese el puerto con el que desea iniciar el servidor: ";
+		cin >> puerto;
+	}
+
 	//Bucle infinito de servicio del servidor
 	while (true) {
 		// Inicia servidor
@@ -63,7 +70,6 @@ int main()
 
 		// Crear socket de escucha
 		string ip = "127.0.0.1";
-		int puerto = 54000;
 
 		SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
 		if (listening == INVALID_SOCKET)
@@ -225,7 +231,30 @@ bool altaServicio(string mensaje) {
 	if (!validarServicio(mensaje)) {
 		// Agregar el servicio al archivo
 		escribirAlArchivo(mensaje);
-		archivarLogCliente("AltaServicio_");
+
+		// Partir el registro en campos
+		string delimitador = ";";
+		string origen = mensaje.substr(0, mensaje.find(";"));
+		mensaje.erase(0, mensaje.find(delimitador) + delimitador.length());
+		string turno = mensaje.substr(0, mensaje.find(";"));
+		mensaje.erase(0, mensaje.find(delimitador) + delimitador.length());
+		string fecha = mensaje.substr(0, mensaje.find(";"));
+
+		if (origen == "m") 
+			origen = "Mar del Plata a Buenos Aires";
+		else if (origen == "b") 
+			origen = "Buenos Aires a Mar del Plata";
+
+		if (turno == "m")
+			turno = "Mañana";
+		else if (turno == "t")
+			turno = "Tarde";
+		else if (turno == "n")
+			turno = "Noche";
+		
+		string log = "AltaServicio: "+origen+"-"+turno+"-"+fecha;
+
+		archivarLogCliente(log);
 
 		respuesta = true;
 	}

@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <iomanip>
-#include<sstream>
+#include <sstream>
 
 using namespace std;
 
@@ -34,7 +34,7 @@ void escribirAlArchivo(string &texto) {
 	archivo.open("../Server/infoServicios.bin", ofstream::binary | ofstream::app);
 
 	if (archivo) {
-		archivo.write(texto.c_str(), 74);
+		archivo.write(texto.c_str(), texto.size());
 		archivo.close();
 	}
 }
